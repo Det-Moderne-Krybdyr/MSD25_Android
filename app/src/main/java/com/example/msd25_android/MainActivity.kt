@@ -22,7 +22,14 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent { MSD25_AndroidTheme { MSD25_AndroidApp() } }
+        setContent {
+            MSD25_AndroidTheme(
+                dynamicColor = false
+            ) {
+                MSD25_AndroidApp()
+            }
+        }
+
     }
 }
 
@@ -32,7 +39,7 @@ enum class AppDestinations(val label: String, val icon: ImageVector) {
     HOME("Home", Icons.Default.Home),
     PROFILE("Profile", Icons.Default.AccountBox),
 
-    // “Skjulte” visninger (tilgås via knapper)
+
     LOGIN("Login", Icons.Default.Home),
     SIGNUP("SignUp", Icons.Default.Home),
     ADD_FRIEND("AddFriend", Icons.Default.Home),
