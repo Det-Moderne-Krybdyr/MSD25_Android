@@ -9,8 +9,12 @@ import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
@@ -22,17 +26,20 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent { MSD25_AndroidTheme { MSD25_AndroidApp() } }
+        setContent {
+            MSD25_AndroidTheme(dynamicColor = false) {   // tving dine grønne farver
+                MSD25_AndroidApp()
+            }
+        }
     }
 }
 
 enum class AppDestinations(val label: String, val icon: ImageVector) {
-    // Bottom nav
     FRIENDS("Friends", Icons.Default.Person),
     HOME("Home", Icons.Default.Home),
     PROFILE("Profile", Icons.Default.AccountBox),
 
-    // “Skjulte” visninger (tilgås via knapper)
+    // “skjulte” sider du kan navigere til via knapper
     LOGIN("Login", Icons.Default.Home),
     SIGNUP("SignUp", Icons.Default.Home),
     ADD_FRIEND("AddFriend", Icons.Default.Home),
@@ -44,24 +51,37 @@ enum class AppDestinations(val label: String, val icon: ImageVector) {
 }
 
 @PreviewScreenSizes
+@Preview(showBackground = true)
 @Composable
 fun MSD25_AndroidApp() {
     var current by remember { mutableStateOf(AppDestinations.HOME) }
-
     val bottom = listOf(AppDestinations.FRIENDS, AppDestinations.HOME, AppDestinations.PROFILE)
+    val cs = MaterialTheme.colorScheme
 
-    NavigationSuiteScaffold(
-        navigationSuiteItems = {
-            bottom.forEach { d ->
-                item(
-                    icon = { Icon(d.icon, contentDescription = d.label) },
-                    label = { Text(d.label) },
-                    selected = d == current,
-                    onClick = { current = d }
-                )
+    Scaffold(
+        bottomBar = {
+            NavigationBar(
+                containerColor = cs.surface,           // hvid bund
+                contentColor = cs.onSurface
+            ) {
+                bottom.forEach { d ->
+                    NavigationBarItem(
+                        selected = d == current,
+                        onClick = { current = d },
+                        icon = { Icon(d.icon, contentDescription = d.label) },
+                        label = { Text(d.label) },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor   = cs.primary,                   // grøn highlight
+                            selectedTextColor   = cs.primary,
+                            indicatorColor      = cs.primary.copy(alpha = 0.15f),
+                            unselectedIconColor = cs.onSurface.copy(alpha = 0.6f),
+                            unselectedTextColor = cs.onSurface.copy(alpha = 0.6f)
+                        )
+                    )
+                }
             }
         }
-    ) {
+    ) { innerPadding ->
         when (current) {
             AppDestinations.FRIENDS -> FriendsScreen(
                 onAddFriend = { current = AppDestinations.ADD_FRIEND }
@@ -75,7 +95,7 @@ fun MSD25_AndroidApp() {
                 onEdit = { current = AppDestinations.EDIT_PROFILE }
             )
 
-            // “Skjulte” sider
+            // “skjulte” ruter
             AppDestinations.LOGIN -> LoginScreen(
                 onLogin = { current = AppDestinations.HOME },
                 onGoToSignUp = { current = AppDestinations.SIGNUP }
