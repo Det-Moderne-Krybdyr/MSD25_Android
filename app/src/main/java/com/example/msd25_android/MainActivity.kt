@@ -101,7 +101,7 @@ fun MSD25_AndroidApp() {
                 onDone = { current = AppDestinations.GROUP_DETAILS }
             )
             AppDestinations.EDIT_PROFILE -> EditProfileScreen(
-                onDone = { current = AppDestinations.PROFILE }
+                onDone = { current = AppDestinations.PROFILE },
             )
         }
     }

@@ -9,11 +9,35 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddFriendScreen(onDone: () -> Unit) {
-    var name by remember { mutableStateOf("") }
-    Scaffold(topBar = { CenterAlignedTopAppBar(title = { Text("ADD FRIEND") }) }) { p ->
-        Column(Modifier.fillMaxSize().padding(p).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedTextField(name, { name = it }, label = { Text("Friend name") }, modifier = Modifier.fillMaxWidth())
-            Button(onClick = onDone, modifier = Modifier.fillMaxWidth()) { Text("SAVE") }
+    var phoneNumber by remember { mutableStateOf("") }
+
+    Scaffold(
+        topBar = { CenterAlignedTopAppBar(title = { Text("ADD FRIEND") }) }
+    ) { p ->
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(p)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Find friends by searching for their phone number",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            OutlinedTextField(
+                value = phoneNumber,
+                onValueChange = { phoneNumber = it },
+                label = { Text("Phone number") },
+                placeholder = { Text("e.g. +45 1234 5678") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Button(
+                onClick = onDone,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("FIND FRIEND")
+            }
         }
     }
 }
