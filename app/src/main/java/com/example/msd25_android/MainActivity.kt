@@ -92,7 +92,8 @@ fun MSD25_AndroidApp() {
                 )
 
                 AppDestinations.PROFILE -> ProfileScreen(
-                    onEdit = { current = AppDestinations.EDIT_PROFILE }
+                    onEdit = { current = AppDestinations.EDIT_PROFILE },
+                    onLogout = {current = AppDestinations.LOGIN}
                 )
 
                 AppDestinations.LOGIN -> LoginScreen(
