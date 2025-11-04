@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
@@ -22,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.example.msd25_android.ui.screens.*
 import com.example.msd25_android.ui.theme.MSD25_AndroidTheme
 import kotlin.math.absoluteValue
+import kotlin.math.roundToInt
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,6 +51,26 @@ enum class AppDestinations(val label: String, val icon: ImageVector) {
     EDIT_PROFILE("EditProfile", Icons.Default.Home)
 }
 
+// ---- Simple in-memory demo model for multiple groups ----
+data class GroupModel(
+    val id: String,
+    val name: String,
+    val members: List<String>,
+    val expenses: SnapshotStateList<Expense>
+)
+
+private fun myBalanceFor(user: String, members: List<String>, expenses: List<Expense>): Double {
+    val balances = members.associateWith { 0.0 }.toMutableMap()
+    if (members.isNotEmpty()) {
+        expenses.forEach { e ->
+            val share = e.amount / members.size
+            members.forEach { m -> balances[m] = (balances[m] ?: 0.0) - share }
+            balances[e.name] = (balances[e.name] ?: 0.0) + e.amount
+        }
+    }
+    return balances[user] ?: 0.0
+}
+
 @PreviewScreenSizes
 @Preview(showBackground = true)
 @Composable
@@ -57,9 +79,48 @@ fun MSD25_AndroidApp() {
     val bottom = listOf(AppDestinations.FRIENDS, AppDestinations.HOME, AppDestinations.PROFILE)
     val cs = MaterialTheme.colorScheme
 
-    var membersForDetails by remember { mutableStateOf(listOf<String>()) }
-    var expensesForDetails by remember { mutableStateOf(listOf<Expense>()) }
-    var currentUserForDetails by remember { mutableStateOf("") }
+    // --- Logged-in user (mock) ---
+    val currentUser = remember { "Mille" }
+
+    // --- Define groups (each with its own persistent expenses list) ---
+    val roomies = remember {
+        GroupModel(
+            id = "roomies",
+            name = "Roomies",
+            members = listOf("Mille", "Julius", "Peter"),
+            expenses = mutableStateListOf()
+        )
+    }
+    val siblings = remember {
+        GroupModel(
+            id = "siblings",
+            name = "Siblings",
+            members = listOf("Mille", "Anna"),
+            expenses = mutableStateListOf()
+        )
+    }
+    val trip = remember {
+        GroupModel(
+            id = "trip-aarhus",
+            name = "Trip to Aarhus",
+            members = listOf("Mille", "Julius", "Peter", "Anna"),
+            expenses = mutableStateListOf()
+        )
+    }
+
+    // Selected group for Group / Details / Pay screens
+    var selectedGroup by remember { mutableStateOf(roomies) }
+
+    // Compute per-group balances for Home cards (for current user)
+    // Reading the lists will recompose when contents change.
+    val summaries = listOf(roomies, siblings, trip).map { g ->
+        GroupSummary(
+            id = g.id,
+            name = g.name,
+            balanceDkk = myBalanceFor(currentUser, g.members, g.expenses).roundToInt()
+        )
+    }
+
     var amountForPay by remember { mutableStateOf(0.0) }
 
     Scaffold(
@@ -94,7 +155,16 @@ fun MSD25_AndroidApp() {
                     onAddFriend = { current = AppDestinations.ADD_FRIEND }
                 )
                 AppDestinations.HOME -> HomeScreen(
-                    onOpenGroup = { current = AppDestinations.GROUP },
+                    groups = summaries, // real, user-specific balances
+                    onOpenGroup = { groupId ->
+                        selectedGroup = when (groupId) {
+                            roomies.id -> roomies
+                            siblings.id -> siblings
+                            trip.id -> trip
+                            else -> roomies
+                        }
+                        current = AppDestinations.GROUP
+                    },
                     onCreateGroup = { current = AppDestinations.ADD_GROUP },
                     onGoToFriends = { current = AppDestinations.FRIENDS }
                 )
@@ -114,37 +184,35 @@ fun MSD25_AndroidApp() {
                     onDone = { current = AppDestinations.FRIENDS }
                 )
                 AppDestinations.ADD_GROUP -> CreateGroupScreen(
-                    onDone = { current = AppDestinations.HOME }
+                    onDone = { current = AppDestinations.HOME },
+                    onBack = { current = AppDestinations.HOME }
                 )
                 AppDestinations.GROUP -> GroupScreen(
-                    onOpenDetails = { members, expenses, currentUser ->
-                        membersForDetails = members
-                        expensesForDetails = expenses
-                        currentUserForDetails = currentUser
+                    groupName = selectedGroup.name,
+                    members = selectedGroup.members,
+                    currentUser = currentUser,
+                    expenses = selectedGroup.expenses, // persists per selected group
+                    onOpenDetails = { _, _, _ ->
                         current = AppDestinations.GROUP_DETAILS
-                    }
+                    },
+                    onBack = { current = AppDestinations.HOME } // working back
                 )
                 AppDestinations.GROUP_DETAILS -> GroupDetailScreen(
-                    members = membersForDetails,
-                    expenses = expensesForDetails,
-                    currentUser = currentUserForDetails,
+                    groupName = selectedGroup.name,
+                    members = selectedGroup.members,
+                    expenses = selectedGroup.expenses,
+                    currentUser = currentUser,
                     onPay = {
-                        val balances = membersForDetails.associateWith { 0.0 }.toMutableMap()
-                        if (membersForDetails.isNotEmpty()) {
-                            expensesForDetails.forEach { e ->
-                                val share = e.amount / membersForDetails.size
-                                membersForDetails.forEach { m -> balances[m] = (balances[m] ?: 0.0) - share }
-                                balances[e.name] = (balances[e.name] ?: 0.0) + e.amount
-                            }
-                        }
-                        amountForPay = (balances[currentUserForDetails] ?: 0.0).absoluteValue
+                        amountForPay = myBalanceFor(currentUser, selectedGroup.members, selectedGroup.expenses)
+                            .absoluteValue
                         current = AppDestinations.PAY
                     },
                     onBack = { current = AppDestinations.GROUP }
                 )
                 AppDestinations.PAY -> PayScreen(
                     amount = amountForPay,
-                    onDone = { current = AppDestinations.GROUP_DETAILS }
+                    onDone = { current = AppDestinations.GROUP_DETAILS },
+                    onBack = { current = AppDestinations.GROUP_DETAILS } // working back
                 )
                 AppDestinations.EDIT_PROFILE -> EditProfileScreen(
                     onDone = { current = AppDestinations.PROFILE }

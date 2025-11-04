@@ -7,29 +7,22 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-data class Group(val name: String, val balanceDkk: Int)
+data class GroupSummary(val id: String, val name: String, val balanceDkk: Int)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onOpenGroup: () -> Unit,
+    groups: List<GroupSummary>,                 // provided by Main with real balances
+    onOpenGroup: (groupId: String) -> Unit,
     onCreateGroup: () -> Unit,
     onGoToFriends: () -> Unit
 ) {
-    val groups = remember {
-        listOf(
-            Group("Roomies", -500),
-            Group("Siblings", 200),
-            Group("Trip to Aarhus", -120)
-        )
-    }
     val cs = MaterialTheme.colorScheme
 
     Scaffold(
@@ -64,8 +57,8 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.weight(1f, fill = true)
             ) {
-                items(groups) { g ->
-                    GroupCard(group = g, onClick = onOpenGroup)
+                items(groups, key = { it.id }) { g ->
+                    GroupCard(group = g, onClick = { onOpenGroup(g.id) })
                 }
             }
         }
@@ -73,7 +66,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun GroupCard(group: Group, onClick: () -> Unit) {
+private fun GroupCard(group: GroupSummary, onClick: () -> Unit) {
     val cs = MaterialTheme.colorScheme
 
     ElevatedCard(
