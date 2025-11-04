@@ -37,7 +37,7 @@ fun PayScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("PAY") },
+                title = { Text("Pay") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -119,7 +119,7 @@ private fun SwipeToConfirm(
             .background(cs.surfaceVariant),
         contentAlignment = Alignment.CenterStart
     ) {
-        // Center label
+
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -127,7 +127,6 @@ private fun SwipeToConfirm(
             Text(text, color = cs.onSurfaceVariant, fontSize = 14.sp)
         }
 
-        // Thumb
         Box(
             modifier = Modifier
                 .offset { IntOffset(offsetX.roundToInt(), 0) }

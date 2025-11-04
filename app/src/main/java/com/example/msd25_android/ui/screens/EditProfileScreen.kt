@@ -27,7 +27,7 @@ fun EditProfileScreen(
     var email by rememberSaveable { mutableStateOf("mille@example.com") }
     var phone by rememberSaveable { mutableStateOf("+45 12 34 56 78") }
     var birthday by rememberSaveable { mutableStateOf("1999-05-12") }
-    var password by rememberSaveable { mutableStateOf("••••••••") }
+    var password by rememberSaveable { mutableStateOf("mille1234") }
     var showPassword by rememberSaveable { mutableStateOf(false) }
     var notificationsEnabled by rememberSaveable { mutableStateOf(true) }
 
@@ -35,7 +35,7 @@ fun EditProfileScreen(
     val scroll = rememberScrollState()
 
     Scaffold(
-        topBar = { CenterAlignedTopAppBar(title = { Text("EDIT PROFILE") }) },
+        topBar = { CenterAlignedTopAppBar(title = { Text("Edit Profile") }) },
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { inner ->
         val topPad = inner.calculateTopPadding()
@@ -47,7 +47,7 @@ fun EditProfileScreen(
                 .verticalScroll(scroll),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Avatar
+
             Box(
                 modifier = Modifier
                     .size(120.dp)
@@ -72,7 +72,6 @@ fun EditProfileScreen(
 
             Spacer(Modifier.height(28.dp))
 
-            // --- Felter i samme stil som Login (OutlinedTextField) ---
             val fieldColors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = cs.primary,
                 unfocusedBorderColor = cs.primary.copy(alpha = 0.5f),
@@ -141,7 +140,6 @@ fun EditProfileScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // Notifications “card” — mere neutral, samme sprog som øvrige skærme
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = cs.surfaceVariant,

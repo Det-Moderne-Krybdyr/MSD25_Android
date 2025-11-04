@@ -27,7 +27,7 @@ fun GroupScreen(
     groupName: String,
     members: List<String>,
     currentUser: String,
-    expenses: SnapshotStateList<Expense>,          // shared, persists per-group
+    expenses: SnapshotStateList<Expense>,
     onOpenDetails: (members: List<String>, expenses: List<Expense>, currentUser: String) -> Unit,
     onBack: () -> Unit = {}
 ) {

@@ -21,7 +21,7 @@ data class GroupSummary(val id: String, val name: String, val balanceDkk: Int)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    groups: List<GroupSummary>,                 // provided by Main with real balances
+    groups: List<GroupSummary>,
     onOpenGroup: (groupId: String) -> Unit,
     onCreateGroup: () -> Unit,
     onGoToFriends: () -> Unit
