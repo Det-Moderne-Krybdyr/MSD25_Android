@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun FriendsScreen(onAddFriend: () -> Unit) {
     val cs = MaterialTheme.colorScheme
-    val friends = remember { listOf("Mille", "Peter", "Bastian", "Nikolaj", "Julius") }
+    val friends = remember { listOf("Marie", "Bastian", "Julius", "Nikolaj", "Peter") }
 
     Scaffold(
         topBar = { CenterAlignedTopAppBar(title = { Text("Friends") }) }
