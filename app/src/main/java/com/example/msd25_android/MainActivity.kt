@@ -27,7 +27,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MSD25_AndroidTheme(dynamicColor = false) {   // tving dine grønne farver
+            MSD25_AndroidTheme(dynamicColor = false) {
                 MSD25_AndroidApp()
             }
         }
@@ -39,7 +39,6 @@ enum class AppDestinations(val label: String, val icon: ImageVector) {
     HOME("Home", Icons.Default.Home),
     PROFILE("Profile", Icons.Default.AccountBox),
 
-    // “skjulte” sider du kan navigere til via knapper
     LOGIN("Login", Icons.Default.Home),
     SIGNUP("SignUp", Icons.Default.Home),
     ADD_FRIEND("AddFriend", Icons.Default.Home),
@@ -61,7 +60,7 @@ fun MSD25_AndroidApp() {
     Scaffold(
         bottomBar = {
             NavigationBar(
-                containerColor = cs.surface,           // hvid bund
+                containerColor = cs.surface,
                 contentColor = cs.onSurface
             ) {
                 bottom.forEach { d ->
@@ -71,7 +70,7 @@ fun MSD25_AndroidApp() {
                         icon = { Icon(d.icon, contentDescription = d.label) },
                         label = { Text(d.label) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor   = cs.primary,                   // grøn highlight
+                            selectedIconColor   = cs.primary,
                             selectedTextColor   = cs.primary,
                             indicatorColor      = cs.primary.copy(alpha = 0.15f),
                             unselectedIconColor = cs.onSurface.copy(alpha = 0.6f),
@@ -94,8 +93,7 @@ fun MSD25_AndroidApp() {
             AppDestinations.PROFILE -> ProfileScreen(
                 onEdit = { current = AppDestinations.EDIT_PROFILE }
             )
-
-            // “skjulte” ruter
+            
             AppDestinations.LOGIN -> LoginScreen(
                 onLogin = { current = AppDestinations.HOME },
                 onGoToSignUp = { current = AppDestinations.SIGNUP }
