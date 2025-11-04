@@ -5,10 +5,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.msd25_android.logic.FriendsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddFriendScreen(onDone: () -> Unit) {
+fun AddFriendScreen(
+    onDone: () -> Unit,
+    viewModel: FriendsViewModel = viewModel()
+) {
+    var name by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
 
     Scaffold(
@@ -22,9 +28,17 @@ fun AddFriendScreen(onDone: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Find friends by searching for their phone number",
+                text = "Add a new friend by entering their name and phone number:",
                 style = MaterialTheme.typography.bodyMedium
             )
+
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Name") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
             OutlinedTextField(
                 value = phoneNumber,
                 onValueChange = { phoneNumber = it },
@@ -32,11 +46,17 @@ fun AddFriendScreen(onDone: () -> Unit) {
                 placeholder = { Text("e.g. +45 1234 5678") },
                 modifier = Modifier.fillMaxWidth()
             )
+
             Button(
-                onClick = onDone,
+                onClick = {
+                    if (name.isNotBlank() && phoneNumber.isNotBlank()) {
+                        viewModel.addFriend(name, phoneNumber)
+                        onDone()
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Find Friend")
+                Text("Save Friend")
             }
         }
     }
