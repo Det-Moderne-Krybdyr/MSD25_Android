@@ -4,14 +4,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.shape.RoundedCornerShape
 
 data class Group(val name: String, val balanceDkk: Int)
 
@@ -20,7 +21,7 @@ data class Group(val name: String, val balanceDkk: Int)
 fun HomeScreen(
     onOpenGroup: () -> Unit,
     onCreateGroup: () -> Unit,
-    onGoToFriends: () -> Unit // kept for callers; not used here
+    onGoToFriends: () -> Unit
 ) {
     val groups = remember {
         listOf(
@@ -29,9 +30,15 @@ fun HomeScreen(
             Group("Trip to Aarhus", -120)
         )
     }
+    val cs = MaterialTheme.colorScheme
 
     Scaffold(
-        topBar = { CenterAlignedTopAppBar(title = { Text("LOGO", fontWeight = FontWeight.Bold) }) }
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("LOGO", fontWeight = FontWeight.Bold, color = cs.onSurface) }
+            )
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { p ->
         Column(
             Modifier
@@ -44,7 +51,11 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = cs.primary,
+                    contentColor = cs.onPrimary
+                )
             ) { Text("CREATE GROUP") }
 
             Spacer(Modifier.height(16.dp))
@@ -54,10 +65,7 @@ fun HomeScreen(
                 modifier = Modifier.weight(1f, fill = true)
             ) {
                 items(groups) { g ->
-                    GroupCard(
-                        group = g,
-                        onClick = onOpenGroup
-                    )
+                    GroupCard(group = g, onClick = onOpenGroup)
                 }
             }
         }
@@ -66,6 +74,8 @@ fun HomeScreen(
 
 @Composable
 private fun GroupCard(group: Group, onClick: () -> Unit) {
+    val cs = MaterialTheme.colorScheme
+
     ElevatedCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
@@ -78,26 +88,17 @@ private fun GroupCard(group: Group, onClick: () -> Unit) {
                     .height(160.dp)
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primaryContainer,
-                                MaterialTheme.colorScheme.secondaryContainer
-                            )
+                            colors = listOf(cs.primaryContainer, cs.secondaryContainer)
                         )
                     )
             ) {
                 val bal = group.balanceDkk
-                val text = if (bal >= 0) "+${bal} dkk" else "${bal} dkk"
-                val labelColor = if (bal >= 0)
-                    MaterialTheme.colorScheme.tertiaryContainer
-                else
-                    MaterialTheme.colorScheme.errorContainer
-                val onLabel = if (bal >= 0)
-                    MaterialTheme.colorScheme.onTertiaryContainer
-                else
-                    MaterialTheme.colorScheme.onErrorContainer
+                val text = if (bal >= 0) "+$bal dkk" else "$bal dkk"
+                val labelBg = if (bal >= 0) cs.tertiaryContainer else cs.errorContainer
+                val labelFg = if (bal >= 0) cs.onTertiaryContainer else cs.onErrorContainer
 
                 Surface(
-                    color = labelColor,
+                    color = labelBg,
                     shape = RoundedCornerShape(10.dp),
                     modifier = Modifier
                         .align(Alignment.TopStart)
@@ -107,18 +108,19 @@ private fun GroupCard(group: Group, onClick: () -> Unit) {
                         text = text,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelLarge,
-                        color = onLabel
+                        color = labelFg
                     )
                 }
             }
-            Surface(color = MaterialTheme.colorScheme.surface, tonalElevation = 1.dp) {
+            Surface(color = cs.surface, tonalElevation = 1.dp) {
                 Text(
                     text = group.name,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 14.dp, vertical = 12.dp),
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = cs.onSurface
                 )
             }
         }
