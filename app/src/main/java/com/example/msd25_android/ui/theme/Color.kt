@@ -1,4 +1,4 @@
-Apackage com.example.msd25_android.ui.theme
+package com.example.msd25_android.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
