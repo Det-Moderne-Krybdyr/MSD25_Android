@@ -56,7 +56,7 @@ fun HomeScreen(
                     containerColor = cs.primary,
                     contentColor = cs.onPrimary
                 )
-            ) { Text("CREATE GROUP") }
+            ) { Text("Create Group") }
 
             Spacer(Modifier.height(16.dp))
 

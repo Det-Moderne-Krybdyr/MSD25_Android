@@ -22,7 +22,7 @@ fun FriendsScreen(onAddFriend: () -> Unit) {
     val friends = remember { listOf("Mille", "Peter", "Bastian", "Nikolaj", "Julius") }
 
     Scaffold(
-        topBar = { CenterAlignedTopAppBar(title = { Text("FRIENDS") }) }
+        topBar = { CenterAlignedTopAppBar(title = { Text("Friends") }) }
     ) { p ->
         Column(
             Modifier
@@ -41,7 +41,7 @@ fun FriendsScreen(onAddFriend: () -> Unit) {
                     contentColor = cs.onPrimary
                 )
             ) {
-                Text("ADD FRIEND")
+                Text("Add Friend")
             }
 
             Spacer(Modifier.height(16.dp))
@@ -66,7 +66,7 @@ private fun FriendCard(name: String) {
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.elevatedCardColors(
-            containerColor = cs.surfaceVariant,   // ← grøn/neutral baggrund (ikke lilla)
+            containerColor = cs.surfaceVariant,
             contentColor = cs.onSurface
         ),
         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 0.dp)
@@ -82,7 +82,7 @@ private fun FriendCard(name: String) {
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(cs.primaryContainer),          // grønlig boble
+                    .background(cs.primaryContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Text(

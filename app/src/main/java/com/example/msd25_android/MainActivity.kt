@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
+import androidx.compose.ui.unit.dp
 import com.example.msd25_android.ui.screens.*
 import com.example.msd25_android.ui.theme.MSD25_AndroidTheme
 import kotlin.math.absoluteValue
@@ -69,6 +71,7 @@ fun MSD25_AndroidApp() {
                         onClick = { current = d },
                         icon = { Icon(d.icon, contentDescription = d.label) },
                         label = { Text(d.label) },
+                        modifier = Modifier.height(56.dp),
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = cs.primary,
                             selectedTextColor = cs.primary,
