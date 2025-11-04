@@ -1,6 +1,8 @@
 package com.example.msd25_android.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,10 +16,14 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(onEdit: () -> Unit) {
+fun ProfileScreen(
+    onEdit: () -> Unit,
+    onLogout: () -> Unit
+) {
     val userName = "Mille Nordal Jakobsen"
     val email = "mille@example.com"
     val phone = "+45 12 34 56 78"
+    val scroll = rememberScrollState()
 
     Scaffold(
         topBar = { CenterAlignedTopAppBar(title = { Text("PROFILE") }) }
@@ -26,13 +32,13 @@ fun ProfileScreen(onEdit: () -> Unit) {
             Modifier
                 .fillMaxSize()
                 .padding(p)
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+                .padding(horizontal = 24.dp, vertical = 16.dp)
+                .verticalScroll(scroll),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // Large profile picture
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(0.8f)
+                    .fillMaxWidth(0.6f)
                     .aspectRatio(1f)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primaryContainer),
@@ -45,10 +51,8 @@ fun ProfileScreen(onEdit: () -> Unit) {
                 )
             }
 
-            // ⬇️ Double spacing between picture and labels
-            Spacer(modifier = Modifier.height(56.dp))
+            Spacer(modifier = Modifier.height(40.dp))
 
-            // Info labels
             Column(
                 Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -69,6 +73,24 @@ fun ProfileScreen(onEdit: () -> Unit) {
             ) {
                 Text("PROFILE SETTINGS")
             }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Button(
+                onClick = onLogout,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                )
+            ) {
+                Text("LOG OUT")
+            }
+
+            Spacer(Modifier.height(16.dp))
         }
     }
 }

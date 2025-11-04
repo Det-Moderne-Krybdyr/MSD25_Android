@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Home
@@ -16,6 +18,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
@@ -47,7 +50,7 @@ enum class AppDestinations(val label: String, val icon: ImageVector) {
     GROUP("Group", Icons.Default.Home),
     GROUP_DETAILS("GroupDetails", Icons.Default.Home),
     PAY("Pay", Icons.Default.Home),
-    EDIT_PROFILE("EditProfile", Icons.Default.Home)
+    EDIT_PROFILE("EditProfile", Icons.Default.Home),
 }
 
 @PreviewScreenSizes
@@ -82,47 +85,50 @@ fun MSD25_AndroidApp() {
             }
         }
     ) { innerPadding ->
-        when (current) {
-            AppDestinations.FRIENDS -> FriendsScreen(
-                onAddFriend = { current = AppDestinations.ADD_FRIEND }
-            )
-            AppDestinations.HOME -> HomeScreen(
-                onOpenGroup = { current = AppDestinations.GROUP },
-                onCreateGroup = { current = AppDestinations.ADD_GROUP },
-                onGoToFriends = { current = AppDestinations.FRIENDS }
-            )
-            AppDestinations.PROFILE -> ProfileScreen(
-                onEdit = { current = AppDestinations.EDIT_PROFILE }
-            )
+        Box(modifier = Modifier.padding(innerPadding)) {
+            when (current) {
+                AppDestinations.FRIENDS -> FriendsScreen(
+                    onAddFriend = { current = AppDestinations.ADD_FRIEND }
+                )
+                AppDestinations.HOME -> HomeScreen(
+                    onOpenGroup = { current = AppDestinations.GROUP },
+                    onCreateGroup = { current = AppDestinations.ADD_GROUP },
+                    onGoToFriends = { current = AppDestinations.FRIENDS }
+                )
+                AppDestinations.PROFILE -> ProfileScreen(
+                    onEdit = { current = AppDestinations.EDIT_PROFILE },
+                    onLogout = { current = AppDestinations.LOGIN }
+                )
 
-            // “skjulte” ruter
-            AppDestinations.LOGIN -> LoginScreen(
-                onLogin = { current = AppDestinations.HOME },
-                onGoToSignUp = { current = AppDestinations.SIGNUP }
-            )
-            AppDestinations.SIGNUP -> SignUpScreen(
-                onCreate = { current = AppDestinations.HOME },
-                onGoToLogin = { current = AppDestinations.LOGIN }
-            )
-            AppDestinations.ADD_FRIEND -> AddFriendScreen(
-                onDone = { current = AppDestinations.FRIENDS }
-            )
-            AppDestinations.ADD_GROUP -> CreateGroupScreen(
-                onDone = { current = AppDestinations.HOME }
-            )
-            AppDestinations.GROUP -> GroupScreen(
-                onOpenDetails = { current = AppDestinations.GROUP_DETAILS }
-            )
-            AppDestinations.GROUP_DETAILS -> GroupDetailScreen(
-                onPay = { current = AppDestinations.PAY },
-                onBack = { current = AppDestinations.GROUP }
-            )
-            AppDestinations.PAY -> PayScreen(
-                onDone = { current = AppDestinations.GROUP_DETAILS }
-            )
-            AppDestinations.EDIT_PROFILE -> EditProfileScreen(
-                onDone = { current = AppDestinations.PROFILE },
-            )
+                // “skjulte” ruter
+                AppDestinations.LOGIN -> LoginScreen(
+                    onLogin = { current = AppDestinations.HOME },
+                    onGoToSignUp = { current = AppDestinations.SIGNUP }
+                )
+                AppDestinations.SIGNUP -> SignUpScreen(
+                    onCreate = { current = AppDestinations.HOME },
+                    onGoToLogin = { current = AppDestinations.LOGIN }
+                )
+                AppDestinations.ADD_FRIEND -> AddFriendScreen(
+                    onDone = { current = AppDestinations.FRIENDS }
+                )
+                AppDestinations.ADD_GROUP -> CreateGroupScreen(
+                    onDone = { current = AppDestinations.HOME }
+                )
+                AppDestinations.GROUP -> GroupScreen(
+                    onOpenDetails = { current = AppDestinations.GROUP_DETAILS }
+                )
+                AppDestinations.GROUP_DETAILS -> GroupDetailScreen(
+                    onPay = { current = AppDestinations.PAY },
+                    onBack = { current = AppDestinations.GROUP }
+                )
+                AppDestinations.PAY -> PayScreen(
+                    onDone = { current = AppDestinations.GROUP_DETAILS }
+                )
+                AppDestinations.EDIT_PROFILE -> EditProfileScreen(
+                    onDone = { current = AppDestinations.PROFILE },
+                )
+            }
         }
     }
 }

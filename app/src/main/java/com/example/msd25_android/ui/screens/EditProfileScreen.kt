@@ -5,12 +5,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -19,15 +21,17 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun EditProfileScreen(
     onDone: () -> Unit,
-    onPickImage: (() -> Unit)? = null // wire this up later to an image picker
+    onPickImage: (() -> Unit)? = null
 ) {
     var name by rememberSaveable { mutableStateOf("Mille Nordal Jakobsen") }
     var email by rememberSaveable { mutableStateOf("mille@example.com") }
     var phone by rememberSaveable { mutableStateOf("+45 12 34 56 78") }
-    var birthday by rememberSaveable { mutableStateOf("1999-05-12") } // mock until DB
-    var password by rememberSaveable { mutableStateOf("") }
+    var birthday by rememberSaveable { mutableStateOf("1999-05-12") }
+    var password by rememberSaveable { mutableStateOf("••••••••") }
     var showPassword by rememberSaveable { mutableStateOf(false) }
     var notificationsEnabled by rememberSaveable { mutableStateOf(true) }
+
+    val spacing = 14.dp
 
     Scaffold(
         topBar = { CenterAlignedTopAppBar(title = { Text("EDIT PROFILE") }) }
@@ -39,23 +43,19 @@ fun EditProfileScreen(
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // Smaller profile picture than ProfileScreen + clickable to change
             Box(
                 modifier = Modifier
-                    .size(120.dp) // smaller than the large avatar on ProfileScreen
+                    .size(120.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primaryContainer)
                     .clickable { onPickImage?.invoke() },
                 contentAlignment = Alignment.Center
             ) {
-                // Use initial as placeholder (keeps parity with ProfileScreen look)
                 Text(
                     text = name.firstOrNull()?.uppercase() ?: "M",
                     style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
-
-                // Tiny edit badge in the corner
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -65,79 +65,58 @@ fun EditProfileScreen(
                 )
             }
 
-            // ⬇️ Keep the same visual rhythm as ProfileScreen
-            Spacer(modifier = Modifier.height(56.dp))
+            Spacer(Modifier.height(36.dp))
 
-            // Editable “cards” that mirror InfoCard styling
-            EditableCard(label = "Name") {
-                TextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Enter your full name") }
-                )
-            }
+            LabeledInputCardBasic(
+                label = "Name",
+                value = name,
+                onValueChange = { name = it },
+                placeholder = "Enter your full name"
+            )
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(spacing))
 
-            EditableCard(label = "Email") {
-                TextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("name@example.com") }
-                )
-            }
+            LabeledInputCardBasic(
+                label = "Email",
+                value = email,
+                onValueChange = { email = it },
+                placeholder = "name@example.com"
+            )
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(spacing))
 
-            EditableCard(label = "Phone") {
-                TextField(
-                    value = phone,
-                    onValueChange = { phone = it },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("+45 12 34 56 78") }
-                )
-            }
+            LabeledInputCardBasic(
+                label = "Phone",
+                value = phone,
+                onValueChange = { phone = it },
+                placeholder = "+45 12 34 56 78"
+            )
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(spacing))
 
-            EditableCard(label = "Birthday") {
-                TextField(
-                    value = birthday,
-                    onValueChange = { birthday = it },
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { /* later: open date picker */ },
-                    placeholder = { Text("YYYY-MM-DD") }
-                )
-            }
+            LabeledInputCardBasic(
+                label = "Birthday",
+                value = birthday,
+                onValueChange = { birthday = it },
+                placeholder = "YYYY-MM-DD",
+                modifier = Modifier.clickable { }
+            )
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(spacing))
 
-            EditableCard(label = "Password") {
-                TextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Enter a new password") },
-                    visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        TextButton(onClick = { showPassword = !showPassword }) {
-                            Text(if (showPassword) "Hide" else "Show")
-                        }
-                    }
-                )
-            }
+            LabeledInputCardBasic(
+                label = "Password",
+                value = password,
+                onValueChange = { password = it },
+                placeholder = "••••••••",
+                isPassword = true,
+                showPassword = showPassword,
+                onTogglePassword = { showPassword = !showPassword },
+                smaller = true
+            )
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(spacing))
 
-            // Notifications setting in the same “card” style
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = MaterialTheme.colorScheme.surfaceVariant,
@@ -147,33 +126,36 @@ fun EditProfileScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(14.dp),
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(Modifier.weight(1f)) {
                         Text(
-                            text = "Allow notifications",
+                            text = "Notifications",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        Spacer(Modifier.height(2.dp))
                         Text(
                             text = if (notificationsEnabled) "Enabled" else "Disabled",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    // Using Switch (platform-standard for a boolean). If you truly want a slider, we can force a 0–1 Slider.
-                    Switch(checked = notificationsEnabled, onCheckedChange = { notificationsEnabled = it })
+                    Switch(
+                        checked = notificationsEnabled,
+                        onCheckedChange = { notificationsEnabled = it }
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(Modifier.height(spacing))
 
             Button(
                 onClick = onDone,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
+                    .height(60.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text("SAVE")
@@ -182,26 +164,71 @@ fun EditProfileScreen(
     }
 }
 
-// Re-usable card that matches your InfoCard visuals but hosts editable content
 @Composable
-private fun EditableCard(
+private fun LabeledInputCardBasic(
     label: String,
-    content: @Composable ColumnScope.() -> Unit
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    isPassword: Boolean = false,
+    showPassword: Boolean = false,
+    onTogglePassword: (() -> Unit)? = null,
+    smaller: Boolean = false
 ) {
+    val textStyle =
+        if (smaller) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodyLarge
+
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surfaceVariant,
         tonalElevation = 1.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(Modifier.padding(14.dp)) {
+        Column(Modifier.padding(horizontal = 14.dp, vertical = if (smaller) 8.dp else 10.dp)) {
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(Modifier.height(6.dp))
-            content()
+            Spacer(Modifier.height(if (smaller) 2.dp else 6.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(modifier = Modifier.weight(1f)) {
+                    if (value.isEmpty()) {
+                        Text(
+                            text = placeholder,
+                            style = textStyle,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    BasicTextField(
+                        value = value,
+                        onValueChange = onValueChange,
+                        singleLine = true,
+                        textStyle = textStyle.merge(
+                            TextStyle(color = MaterialTheme.colorScheme.onSurface)
+                        ),
+                        visualTransformation = if (isPassword && !showPassword)
+                            PasswordVisualTransformation()
+                        else
+                            VisualTransformation.None,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .then(modifier)
+                    )
+                }
+                if (isPassword && onTogglePassword != null) {
+                    TextButton(onClick = onTogglePassword) {
+                        Text(
+                            if (showPassword) "Hide" else "Show",
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                }
+            }
         }
     }
 }
