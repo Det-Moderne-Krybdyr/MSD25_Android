@@ -1,5 +1,6 @@
 package com.example.msd25_android.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,8 +12,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.msd25_android.R
 
 data class Group(val name: String, val balanceDkk: Int)
 
@@ -35,7 +38,15 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("LOGO", fontWeight = FontWeight.Bold, color = cs.onSurface) }
+                title = {
+                    Image(
+                        painter = painterResource(id = R.drawable.logo2),
+                        contentDescription = "FairShare logo",
+                        modifier = Modifier
+                            .width(160.dp)
+                            .padding(vertical = 6.dp)
+                    )
+                }
             )
         },
         contentWindowInsets = WindowInsets(0, 0, 0, 0)

@@ -3,16 +3,16 @@ package com.example.msd25_android.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -31,7 +31,8 @@ fun EditProfileScreen(
     var showPassword by rememberSaveable { mutableStateOf(false) }
     var notificationsEnabled by rememberSaveable { mutableStateOf(true) }
 
-    val spacing = 14.dp
+    val cs = MaterialTheme.colorScheme
+    val scroll = rememberScrollState()
 
     Scaffold(
         topBar = { CenterAlignedTopAppBar(title = { Text("EDIT PROFILE") }) },
@@ -42,86 +43,108 @@ fun EditProfileScreen(
             Modifier
                 .fillMaxSize()
                 .padding(top = topPad)
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .padding(horizontal = 24.dp, vertical = 16.dp)
+                .verticalScroll(scroll),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Avatar
             Box(
                 modifier = Modifier
                     .size(120.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .background(cs.primaryContainer)
                     .clickable { onPickImage?.invoke() },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = name.firstOrNull()?.uppercase() ?: "M",
                     style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = cs.onPrimaryContainer
                 )
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .size(20.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.secondaryContainer)
+                        .background(cs.secondaryContainer)
                 )
             }
 
-            Spacer(Modifier.height(36.dp))
+            Spacer(Modifier.height(28.dp))
 
-            LabeledInputCardBasic(
-                label = "Name",
+            // --- Felter i samme stil som Login (OutlinedTextField) ---
+            val fieldColors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = cs.primary,
+                unfocusedBorderColor = cs.primary.copy(alpha = 0.5f),
+                focusedLabelColor = cs.primary,
+                unfocusedLabelColor = cs.onSurfaceVariant
+            )
+
+            OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                placeholder = "Enter your full name"
+                label = { Text("Name") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                colors = fieldColors
             )
 
-            Spacer(Modifier.height(spacing))
+            Spacer(Modifier.height(12.dp))
 
-            LabeledInputCardBasic(
-                label = "Email",
+            OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                placeholder = "name@example.com"
+                label = { Text("Email") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                colors = fieldColors
             )
 
-            Spacer(Modifier.height(spacing))
+            Spacer(Modifier.height(12.dp))
 
-            LabeledInputCardBasic(
-                label = "Phone",
+            OutlinedTextField(
                 value = phone,
                 onValueChange = { phone = it },
-                placeholder = "+45 12 34 56 78"
+                label = { Text("Phone") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                colors = fieldColors
             )
 
-            Spacer(Modifier.height(spacing))
+            Spacer(Modifier.height(12.dp))
 
-            LabeledInputCardBasic(
-                label = "Birthday",
+            OutlinedTextField(
                 value = birthday,
                 onValueChange = { birthday = it },
-                placeholder = "YYYY-MM-DD",
-                modifier = Modifier.clickable { }
+                label = { Text("Birthday") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                colors = fieldColors
             )
 
-            Spacer(Modifier.height(spacing))
+            Spacer(Modifier.height(12.dp))
 
-            LabeledInputCardBasic(
-                label = "Password",
+            OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                placeholder = "••••••••",
-                isPassword = true,
-                showPassword = showPassword,
-                onTogglePassword = { showPassword = !showPassword },
-                smaller = true
+                label = { Text("Password") },
+                singleLine = true,
+                visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                trailingIcon = {
+                    TextButton(onClick = { showPassword = !showPassword }) {
+                        Text(if (showPassword) "Hide" else "Show", style = MaterialTheme.typography.labelSmall)
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = fieldColors
             )
 
-            Spacer(Modifier.height(spacing))
+            Spacer(Modifier.height(16.dp))
 
+            // Notifications “card” — mere neutral, samme sprog som øvrige skærme
             Surface(
                 shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
+                color = cs.surfaceVariant,
                 tonalElevation = 1.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -132,104 +155,24 @@ fun EditProfileScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text(
-                            text = "Notifications",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Text("Notifications", style = MaterialTheme.typography.labelMedium, color = cs.onSurfaceVariant)
                         Spacer(Modifier.height(2.dp))
-                        Text(
-                            text = if (notificationsEnabled) "Enabled" else "Disabled",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                        Text(if (notificationsEnabled) "Enabled" else "Disabled", style = MaterialTheme.typography.bodyLarge, color = cs.onSurface)
                     }
-                    Switch(
-                        checked = notificationsEnabled,
-                        onCheckedChange = { notificationsEnabled = it }
-                    )
+                    Switch(checked = notificationsEnabled, onCheckedChange = { notificationsEnabled = it })
                 }
             }
 
-            Spacer(Modifier.height(spacing))
+            Spacer(Modifier.height(16.dp))
 
             Button(
                 onClick = onDone,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .requiredHeight(40.dp),
+                    .height(48.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text("Save")
-            }
-        }
-    }
-}
-
-@Composable
-private fun LabeledInputCardBasic(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    modifier: Modifier = Modifier,
-    isPassword: Boolean = false,
-    showPassword: Boolean = false,
-    onTogglePassword: (() -> Unit)? = null,
-    smaller: Boolean = false
-) {
-    val textStyle =
-        if (smaller) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.bodyLarge
-
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        tonalElevation = 1.dp,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(Modifier.padding(horizontal = 14.dp, vertical = if (smaller) 8.dp else 10.dp)) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(Modifier.height(if (smaller) 2.dp else 6.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Box(modifier = Modifier.weight(1f)) {
-                    if (value.isEmpty()) {
-                        Text(
-                            text = placeholder,
-                            style = textStyle,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    BasicTextField(
-                        value = value,
-                        onValueChange = onValueChange,
-                        singleLine = true,
-                        textStyle = textStyle.merge(
-                            TextStyle(color = MaterialTheme.colorScheme.onSurface)
-                        ),
-                        visualTransformation = if (isPassword && !showPassword)
-                            PasswordVisualTransformation()
-                        else
-                            VisualTransformation.None,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .then(modifier)
-                    )
-                }
-                if (isPassword && onTogglePassword != null) {
-                    TextButton(onClick = onTogglePassword) {
-                        Text(
-                            if (showPassword) "Hide" else "Show",
-                            style = MaterialTheme.typography.labelSmall
-                        )
-                    }
-                }
             }
         }
     }

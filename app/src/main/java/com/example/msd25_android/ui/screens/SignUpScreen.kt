@@ -1,12 +1,16 @@
 package com.example.msd25_android.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.example.msd25_android.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,35 +30,103 @@ fun SignUpScreen(
             birthday.isNotBlank() && pw.isNotBlank() && confirm.isNotBlank() &&
             pw == confirm && accepted
 
-    Scaffold(topBar = { CenterAlignedTopAppBar(title = { Text("LOGO") }) }) { p ->
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Image(
+                        painter = painterResource(id = R.drawable.logo2),
+                        contentDescription = "FairShare logo",
+                        modifier = Modifier
+                            .width(160.dp)
+                            .padding(vertical = 6.dp)
+                    )
+                }
+            )
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+    ) { p ->
         Column(
             Modifier
                 .fillMaxSize()
                 .padding(p)
                 .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(email, { email = it }, label = { Text("E-mail") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(phone, { phone = it }, label = { Text("Phone") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(birthday, { birthday = it }, label = { Text("Birthday") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(pw, { pw = it }, label = { Text("Password") }, singleLine = true,
-                visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(confirm, { confirm = it }, label = { Text("Confirm Password") }, singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                isError = confirm.isNotEmpty() && pw != confirm,
-                supportingText = { if (confirm.isNotEmpty() && pw != confirm) Text("Passwords don’t match") },
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Name") },
+                singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
-            Row {
-                Checkbox(accepted, { accepted = it })
+
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("E-mail") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = phone,
+                onValueChange = { phone = it },
+                label = { Text("Phone") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = birthday,
+                onValueChange = { birthday = it },
+                label = { Text("Birthday") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = pw,
+                onValueChange = { pw = it },
+                label = { Text("Password") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = confirm,
+                onValueChange = { confirm = it },
+                label = { Text("Confirm Password") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                isError = confirm.isNotEmpty() && pw != confirm,
+                supportingText = {
+                    if (confirm.isNotEmpty() && pw != confirm)
+                        Text("Passwords don’t match")
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(checked = accepted, onCheckedChange = { accepted = it })
                 Spacer(Modifier.width(8.dp))
                 Text("Accept terms & conditions")
             }
-            Button(onClick = onCreate, enabled = canCreate, modifier = Modifier.fillMaxWidth()) {
+
+            Button(
+                onClick = onCreate,
+                enabled = canCreate,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text("Create User")
             }
-            TextButton(onClick = onGoToLogin, modifier = Modifier.fillMaxWidth()) {
+
+            TextButton(
+                onClick = onGoToLogin,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text("Already a user?")
             }
         }
