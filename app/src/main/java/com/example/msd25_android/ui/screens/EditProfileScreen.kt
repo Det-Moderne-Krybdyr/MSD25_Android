@@ -34,12 +34,14 @@ fun EditProfileScreen(
     val spacing = 14.dp
 
     Scaffold(
-        topBar = { CenterAlignedTopAppBar(title = { Text("EDIT PROFILE") }) }
-    ) { p ->
+        topBar = { CenterAlignedTopAppBar(title = { Text("EDIT PROFILE") }) },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+    ) { inner ->
+        val topPad = inner.calculateTopPadding()
         Column(
             Modifier
                 .fillMaxSize()
-                .padding(p)
+                .padding(top = topPad)
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -155,10 +157,10 @@ fun EditProfileScreen(
                 onClick = onDone,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(60.dp),
+                    .requiredHeight(40.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("SAVE")
+                Text("Save")
             }
         }
     }
