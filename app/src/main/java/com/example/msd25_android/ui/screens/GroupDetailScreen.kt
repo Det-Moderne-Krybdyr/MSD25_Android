@@ -65,7 +65,7 @@ fun GroupDetailScreen(
                 Box(Modifier.fillMaxWidth().padding(16.dp)) {
                     Button(
                         onClick = onPay,
-                        enabled = myBalance < 0.0, // only active if user owes
+                        enabled = myBalance < 0.0,
                         modifier = Modifier.fillMaxWidth(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = cs.primary,
@@ -74,7 +74,7 @@ fun GroupDetailScreen(
                             disabledContentColor = cs.onSurfaceVariant
                         )
                     ) {
-                        Text(if (myBalance < 0.0) "PAY NOW" else "ALL SET")
+                        Text(if (myBalance < 0.0) "Pay Now" else "All Set")
                     }
                 }
             }

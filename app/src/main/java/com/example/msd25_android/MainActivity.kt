@@ -51,7 +51,6 @@ enum class AppDestinations(val label: String, val icon: ImageVector) {
     EDIT_PROFILE("EditProfile", Icons.Default.Home)
 }
 
-// ---- Simple in-memory demo model for multiple groups ----
 data class GroupModel(
     val id: String,
     val name: String,
@@ -79,10 +78,8 @@ fun MSD25_AndroidApp() {
     val bottom = listOf(AppDestinations.FRIENDS, AppDestinations.HOME, AppDestinations.PROFILE)
     val cs = MaterialTheme.colorScheme
 
-    // --- Logged-in user (mock) ---
     val currentUser = remember { "Mille" }
 
-    // --- Define groups (each with its own persistent expenses list) ---
     val roomies = remember {
         GroupModel(
             id = "roomies",
@@ -108,11 +105,8 @@ fun MSD25_AndroidApp() {
         )
     }
 
-    // Selected group for Group / Details / Pay screens
     var selectedGroup by remember { mutableStateOf(roomies) }
 
-    // Compute per-group balances for Home cards (for current user)
-    // Reading the lists will recompose when contents change.
     val summaries = listOf(roomies, siblings, trip).map { g ->
         GroupSummary(
             id = g.id,
@@ -155,7 +149,7 @@ fun MSD25_AndroidApp() {
                     onAddFriend = { current = AppDestinations.ADD_FRIEND }
                 )
                 AppDestinations.HOME -> HomeScreen(
-                    groups = summaries, // real, user-specific balances
+                    groups = summaries,
                     onOpenGroup = { groupId ->
                         selectedGroup = when (groupId) {
                             roomies.id -> roomies
@@ -191,11 +185,11 @@ fun MSD25_AndroidApp() {
                     groupName = selectedGroup.name,
                     members = selectedGroup.members,
                     currentUser = currentUser,
-                    expenses = selectedGroup.expenses, // persists per selected group
+                    expenses = selectedGroup.expenses,
                     onOpenDetails = { _, _, _ ->
                         current = AppDestinations.GROUP_DETAILS
                     },
-                    onBack = { current = AppDestinations.HOME } // working back
+                    onBack = { current = AppDestinations.HOME }
                 )
                 AppDestinations.GROUP_DETAILS -> GroupDetailScreen(
                     groupName = selectedGroup.name,
@@ -212,7 +206,7 @@ fun MSD25_AndroidApp() {
                 AppDestinations.PAY -> PayScreen(
                     amount = amountForPay,
                     onDone = { current = AppDestinations.GROUP_DETAILS },
-                    onBack = { current = AppDestinations.GROUP_DETAILS } // working back
+                    onBack = { current = AppDestinations.GROUP_DETAILS }
                 )
                 AppDestinations.EDIT_PROFILE -> EditProfileScreen(
                     onDone = { current = AppDestinations.PROFILE }

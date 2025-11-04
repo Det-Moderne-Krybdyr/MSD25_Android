@@ -26,11 +26,11 @@ fun LoginScreen(
     ) { inner ->
         val topPad = inner.calculateTopPadding()
 
-        Box( // vi bruger Box for at centrere hele indholdet vertikalt
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = topPad, start = 24.dp, end = 24.dp, bottom = 24.dp),
-            contentAlignment = Alignment.Center // centrer alt vertikalt og horisontalt
+            contentAlignment = Alignment.Center
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
