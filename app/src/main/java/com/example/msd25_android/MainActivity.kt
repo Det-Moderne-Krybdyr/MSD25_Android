@@ -21,6 +21,7 @@ import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import com.example.msd25_android.ui.screens.*
 import com.example.msd25_android.ui.theme.MSD25_AndroidTheme
+import kotlin.math.absoluteValue
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,6 +57,11 @@ fun MSD25_AndroidApp() {
     val bottom = listOf(AppDestinations.FRIENDS, AppDestinations.HOME, AppDestinations.PROFILE)
     val cs = MaterialTheme.colorScheme
 
+    var membersForDetails by remember { mutableStateOf(listOf<String>()) }
+    var expensesForDetails by remember { mutableStateOf(listOf<Expense>()) }
+    var currentUserForDetails by remember { mutableStateOf("") }
+    var amountForPay by remember { mutableStateOf(0.0) }
+
     Scaffold(
         bottomBar = {
             NavigationBar(containerColor = cs.surface, contentColor = cs.onSurface) {
@@ -67,9 +73,9 @@ fun MSD25_AndroidApp() {
                         label = { Text(d.label) },
                         modifier = Modifier.height(56.dp),
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor   = cs.primary,
-                            selectedTextColor   = cs.primary,
-                            indicatorColor      = cs.primary.copy(alpha = 0.15f),
+                            selectedIconColor = cs.primary,
+                            selectedTextColor = cs.primary,
+                            indicatorColor = cs.primary.copy(alpha = 0.15f),
                             unselectedIconColor = cs.onSurface.copy(alpha = 0.6f),
                             unselectedTextColor = cs.onSurface.copy(alpha = 0.6f)
                         )
@@ -87,49 +93,59 @@ fun MSD25_AndroidApp() {
                 AppDestinations.FRIENDS -> FriendsScreen(
                     onAddFriend = { current = AppDestinations.ADD_FRIEND }
                 )
-
                 AppDestinations.HOME -> HomeScreen(
                     onOpenGroup = { current = AppDestinations.GROUP },
                     onCreateGroup = { current = AppDestinations.ADD_GROUP },
                     onGoToFriends = { current = AppDestinations.FRIENDS }
                 )
-
                 AppDestinations.PROFILE -> ProfileScreen(
                     onEdit = { current = AppDestinations.EDIT_PROFILE },
-                    onLogout = {current = AppDestinations.LOGIN}
+                    onLogout = { current = AppDestinations.LOGIN }
                 )
-
                 AppDestinations.LOGIN -> LoginScreen(
                     onLogin = { current = AppDestinations.HOME },
                     onGoToSignUp = { current = AppDestinations.SIGNUP }
                 )
-
                 AppDestinations.SIGNUP -> SignUpScreen(
                     onCreate = { current = AppDestinations.HOME },
                     onGoToLogin = { current = AppDestinations.LOGIN }
                 )
-
                 AppDestinations.ADD_FRIEND -> AddFriendScreen(
                     onDone = { current = AppDestinations.FRIENDS }
                 )
-
                 AppDestinations.ADD_GROUP -> CreateGroupScreen(
                     onDone = { current = AppDestinations.HOME }
                 )
-
                 AppDestinations.GROUP -> GroupScreen(
-                    onOpenDetails = { current = AppDestinations.GROUP_DETAILS }
+                    onOpenDetails = { members, expenses, currentUser ->
+                        membersForDetails = members
+                        expensesForDetails = expenses
+                        currentUserForDetails = currentUser
+                        current = AppDestinations.GROUP_DETAILS
+                    }
                 )
-
                 AppDestinations.GROUP_DETAILS -> GroupDetailScreen(
-                    onPay = { current = AppDestinations.PAY },
+                    members = membersForDetails,
+                    expenses = expensesForDetails,
+                    currentUser = currentUserForDetails,
+                    onPay = {
+                        val balances = membersForDetails.associateWith { 0.0 }.toMutableMap()
+                        if (membersForDetails.isNotEmpty()) {
+                            expensesForDetails.forEach { e ->
+                                val share = e.amount / membersForDetails.size
+                                membersForDetails.forEach { m -> balances[m] = (balances[m] ?: 0.0) - share }
+                                balances[e.name] = (balances[e.name] ?: 0.0) + e.amount
+                            }
+                        }
+                        amountForPay = (balances[currentUserForDetails] ?: 0.0).absoluteValue
+                        current = AppDestinations.PAY
+                    },
                     onBack = { current = AppDestinations.GROUP }
                 )
-
                 AppDestinations.PAY -> PayScreen(
+                    amount = amountForPay,
                     onDone = { current = AppDestinations.GROUP_DETAILS }
                 )
-
                 AppDestinations.EDIT_PROFILE -> EditProfileScreen(
                     onDone = { current = AppDestinations.PROFILE }
                 )
