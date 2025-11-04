@@ -13,7 +13,7 @@ fun PayScreen(onDone: () -> Unit) {
     Scaffold(topBar = { CenterAlignedTopAppBar(title = { Text("PAY") }) }) { p ->
         Column(Modifier.fillMaxSize().padding(p).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedTextField(amount, { amount = it }, label = { Text("Amount (DKK)") })
-            Button(onClick = onDone, modifier = Modifier.fillMaxWidth()) { Text("CONFIRM PAYMENT") }
+            Button(onClick = onDone, modifier = Modifier.fillMaxWidth()) { Text("Confirm Payment") }
         }
     }
 }

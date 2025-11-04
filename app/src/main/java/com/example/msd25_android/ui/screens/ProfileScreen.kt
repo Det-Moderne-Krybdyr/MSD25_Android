@@ -26,7 +26,7 @@ fun ProfileScreen(
     val scroll = rememberScrollState()
 
     Scaffold(
-        topBar = { CenterAlignedTopAppBar(title = { Text("PROFILE") }) }
+        topBar = { CenterAlignedTopAppBar(title = { Text("Profile") }) }
     ) { p ->
         Column(
             Modifier
@@ -71,7 +71,7 @@ fun ProfileScreen(
                     .height(50.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("PROFILE SETTINGS")
+                Text("Profile Settings")
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -87,7 +87,7 @@ fun ProfileScreen(
                     contentColor = MaterialTheme.colorScheme.onSurface
                 )
             ) {
-                Text("LOG OUT")
+                Text("Log Out")
             }
 
             Spacer(Modifier.height(16.dp))

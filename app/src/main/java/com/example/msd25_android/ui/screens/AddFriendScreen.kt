@@ -12,7 +12,7 @@ fun AddFriendScreen(onDone: () -> Unit) {
     var phoneNumber by remember { mutableStateOf("") }
 
     Scaffold(
-        topBar = { CenterAlignedTopAppBar(title = { Text("ADD FRIEND") }) }
+        topBar = { CenterAlignedTopAppBar(title = { Text("Add Friend") }) }
     ) { p ->
         Column(
             Modifier
@@ -36,7 +36,7 @@ fun AddFriendScreen(onDone: () -> Unit) {
                 onClick = onDone,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("FIND FRIEND")
+                Text("Find Friend")
             }
         }
     }
