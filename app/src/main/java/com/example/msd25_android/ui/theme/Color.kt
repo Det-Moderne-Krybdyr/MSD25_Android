@@ -2,23 +2,19 @@ package com.example.msd25_android.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-//Green palate primary
-val Green80 = Color(0xFFB8E986)     // Light green (for dark theme)
-val GreenGrey80 = Color(0xFFA8C8A0) // Muted light grey-green
-val Teal80 = Color(0xFF80CBC4)      // Soft blue-green accent
+// Primære grønne nuancer
+val GreenPrimary = Color(0xFF2E7D32)
+val GreenLight = Color(0xFFA5D6A7)
+val GreenDark = Color(0xFF1B5E20)
 
-val Green40 = Color(0xFF388E3C)     // Deep forest green
-val GreenGrey40 = Color(0xFF4E6E5D) // Olive grey-green
-val Teal40 = Color(0xFF00796B)      // Blue-green (tertiary)
+// Neutrale farver
+val WhiteBackground = Color(0xFFFFFFFF)
+val LightGraySurface = Color(0xFFF8F8F8)
+val TextPrimary = Color(0xFF1B1B1B)
+val TextSecondary = Color(0xFF4E4E4E)
 
-//Accent colors
-val SuccessGreen = Color(0xFF4CAF50)    // Material green
-val WarningYellow = Color(0xFFFFC107)   // Amber
-val ErrorRed = Color(0xFFD32F2F)        // Bright red for errors
-val InfoBlue = Color(0xFF2196F3)        // Medium blue for info
-
-//Neutral tones
-val BackgroundLight = Color(0xFFF8FFF8)
-val SurfaceLight = Color(0xFFFFFFFF)
-val BackgroundDark = Color(0xFF1B1D1B)
-val SurfaceDark = Color(0xFF2A2D29)
+// Statusfarver
+val SuccessGreen = Color(0xFF4CAF50)
+val WarningYellow = Color(0xFFFFC107)
+val ErrorRed = Color(0xFFD32F2F)
+val InfoBlue = Color(0xFF2196F3)
