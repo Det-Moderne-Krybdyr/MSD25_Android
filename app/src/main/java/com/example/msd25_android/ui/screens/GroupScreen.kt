@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
@@ -23,20 +24,19 @@ data class Expense(val name: String, val amount: Double, val note: String)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupScreen(
+    groupName: String,
+    members: List<String>,
+    currentUser: String,
+    expenses: SnapshotStateList<Expense>,          // shared, persists per-group
     onOpenDetails: (members: List<String>, expenses: List<Expense>, currentUser: String) -> Unit,
     onBack: () -> Unit = {}
 ) {
-    val group = remember { "Roomies" }
-    val members = remember { listOf("Mille", "Julius", "Peter") }
-    val currentUser = "Mille"
-
-    val expenses = remember { mutableStateListOf<Expense>() }
     var showAddDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(group) },
+                title = { Text(groupName) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(

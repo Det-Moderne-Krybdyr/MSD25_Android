@@ -17,8 +17,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-// no Expense declaration here – reuse the one from GroupScreen (same package)
-
 private fun calculateBalances(
     members: List<String>,
     expenses: List<Expense>
@@ -36,6 +34,7 @@ private fun calculateBalances(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupDetailScreen(
+    groupName: String,
     members: List<String>,
     expenses: List<Expense>,
     currentUser: String,
@@ -50,7 +49,7 @@ fun GroupDetailScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("GROUP DETAILS") },
+                title = { Text("$groupName • Details") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
