@@ -6,13 +6,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.msd25_android.logic.FriendsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddFriendScreen(
     onDone: () -> Unit,
-    viewModel: FriendsViewModel = viewModel()
 ) {
     var name by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
@@ -50,7 +48,7 @@ fun AddFriendScreen(
             Button(
                 onClick = {
                     if (name.isNotBlank() && phoneNumber.isNotBlank()) {
-                        viewModel.addFriend(name, phoneNumber)
+
                         onDone()
                     }
                 },

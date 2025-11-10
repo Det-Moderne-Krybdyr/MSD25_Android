@@ -5,13 +5,13 @@ import androidx.room.ForeignKey
 
 @Entity(
     tableName = "friend_cross_ref",
-    primaryKeys = ["firstId", "secondId"],
+    primaryKeys = ["id", "friendId"],
     foreignKeys = [
-        ForeignKey(entity = User::class, parentColumns = ["id"], childColumns = ["firstId"]),
-        ForeignKey(entity = User::class, parentColumns = ["id"], childColumns = ["secondId"])
+        ForeignKey(entity = User::class, parentColumns = ["id"], childColumns = ["id"]),
+        ForeignKey(entity = User::class, parentColumns = ["id"], childColumns = ["friendId"])
     ]
     )
 data class FriendCrossRef(
-    val firstId: Long,
-    val secondId: Long,
+    val id: Long,
+    val friendId: Long,
 )

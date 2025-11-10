@@ -7,15 +7,23 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.msd25_android.R
+import com.example.msd25_android.logic.AuthResponse
+import com.example.msd25_android.logic.data.Converters
+import com.example.msd25_android.logic.data.user.User
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignUpScreen(
-    onCreate: () -> Unit,
+    onCreate: suspend (user: User) -> AuthResponse,
     onGoToLogin: () -> Unit
 ) {
     var name by rememberSaveable { mutableStateOf("") }
@@ -29,6 +37,9 @@ fun SignUpScreen(
     val canCreate = name.isNotBlank() && email.isNotBlank() && phone.isNotBlank() &&
             birthday.isNotBlank() && pw.isNotBlank() && confirm.isNotBlank() &&
             pw == confirm && accepted
+
+    val coroutineScope = rememberCoroutineScope()
+    var failedMsg by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -109,6 +120,11 @@ fun SignUpScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            Text(
+                text = failedMsg,
+                color = Color(217, 97, 97, 255)
+            )
+
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(checked = accepted, onCheckedChange = { accepted = it })
                 Spacer(Modifier.width(8.dp))
@@ -116,7 +132,19 @@ fun SignUpScreen(
             }
 
             Button(
-                onClick = onCreate,
+                onClick = {
+                    val user = User(
+                        name = name,
+                        email = email,
+                        phoneNumber = phone,
+                        password = pw,
+                        birthdate = Clock.System.now()
+                    )
+                    coroutineScope.launch(Dispatchers.IO) {
+                        val response = onCreate(user)
+                        if (!response.success) failedMsg = response.message
+                    }
+                },
                 enabled = canCreate,
                 modifier = Modifier.fillMaxWidth()
             ) {
