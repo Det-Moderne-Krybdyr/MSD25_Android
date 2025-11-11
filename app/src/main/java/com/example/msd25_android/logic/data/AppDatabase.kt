@@ -4,11 +4,37 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import android.content.Context
+import androidx.room.TypeConverters
+import com.example.msd25_android.logic.data.dao.GroupDao
+import com.example.msd25_android.logic.data.dao.SessionDao
+import com.example.msd25_android.logic.data.dao.UserDao
+import com.example.msd25_android.logic.data.expense.Expense
+import com.example.msd25_android.logic.data.expense.ExpenseShare
+import com.example.msd25_android.logic.data.group.Group
+import com.example.msd25_android.logic.data.group.GroupUserRef
+import com.example.msd25_android.logic.data.session.Session
+import com.example.msd25_android.logic.data.user.User
+import com.example.msd25_android.logic.data.user.FriendCrossRef
 
-@Database(entities = [Friend::class], version = 1, exportSchema = false)
+@Database(
+    entities =
+        [
+            User::class,
+            FriendCrossRef::class,
+            Group::class,
+            GroupUserRef::class,
+            Expense::class,
+            ExpenseShare::class,
+            Session::class
+        ],
+    version = 1,
+    exportSchema = false
+)
+@TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun friendDao(): FriendDao
-
+    abstract fun userDao(): UserDao
+    abstract fun groupDao(): GroupDao
+    abstract fun sessionDao(): SessionDao
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
@@ -16,9 +42,9 @@ abstract class AppDatabase : RoomDatabase() {
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    AppDatabase::class.java,
-                    "friends_db"
+                    context = context.applicationContext,
+                    klass = AppDatabase::class.java,
+                    name = "expenses_app_db"
                 ).build()
                 INSTANCE = instance
                 instance

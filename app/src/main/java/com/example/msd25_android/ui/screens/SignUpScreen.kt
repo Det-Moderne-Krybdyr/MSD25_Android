@@ -1,5 +1,6 @@
 package com.example.msd25_android.ui.screens
 
+import CustomDatePicker
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -7,28 +8,50 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.msd25_android.R
+import com.example.msd25_android.logic.SessionManager.AuthResponse
+import com.example.msd25_android.logic.data.Converters
+import com.example.msd25_android.logic.data.user.User
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignUpScreen(
-    onCreate: () -> Unit,
+    onCreate: suspend (user: User) -> AuthResponse,
     onGoToLogin: () -> Unit
 ) {
     var name by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
     var phone by rememberSaveable { mutableStateOf("") }
-    var birthday by rememberSaveable { mutableStateOf("") }
     var pw by rememberSaveable { mutableStateOf("") }
     var confirm by rememberSaveable { mutableStateOf("") }
     var accepted by rememberSaveable { mutableStateOf(false) }
 
     val canCreate = name.isNotBlank() && email.isNotBlank() && phone.isNotBlank() &&
-            birthday.isNotBlank() && pw.isNotBlank() && confirm.isNotBlank() &&
+            pw.isNotBlank() && confirm.isNotBlank() &&
             pw == confirm && accepted
+
+    val coroutineScope = rememberCoroutineScope()
+    var failedMsg by remember { mutableStateOf("") }
+
+    val initialDateMillis = LocalDate(2025, 1, 15)
+        .atStartOfDayIn(TimeZone.UTC)
+        .toEpochMilliseconds()
+
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = initialDateMillis,
+        initialDisplayMode = DisplayMode.Picker,
+    )
 
     Scaffold(
         topBar = {
@@ -78,13 +101,7 @@ fun SignUpScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            OutlinedTextField(
-                value = birthday,
-                onValueChange = { birthday = it },
-                label = { Text("Birthday") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
+            CustomDatePicker(state = datePickerState)
 
             OutlinedTextField(
                 value = pw,
@@ -109,6 +126,11 @@ fun SignUpScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            Text(
+                text = failedMsg,
+                color = Color(217, 97, 97, 255)
+            )
+
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(checked = accepted, onCheckedChange = { accepted = it })
                 Spacer(Modifier.width(8.dp))
@@ -116,7 +138,19 @@ fun SignUpScreen(
             }
 
             Button(
-                onClick = onCreate,
+                onClick = {
+                    val user = User(
+                        name = name,
+                        email = email,
+                        phoneNumber = phone,
+                        password = pw,
+                        birthdate = Instant.fromEpochMilliseconds(datePickerState.selectedDateMillis!!)
+                    )
+                    coroutineScope.launch(Dispatchers.IO) {
+                        val response = onCreate(user)
+                        if (!response.success) failedMsg = response.message
+                    }
+                },
                 enabled = canCreate,
                 modifier = Modifier.fillMaxWidth()
             ) {

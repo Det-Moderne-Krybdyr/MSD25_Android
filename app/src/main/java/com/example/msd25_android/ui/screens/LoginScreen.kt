@@ -1,24 +1,34 @@
 package com.example.msd25_android.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.msd25_android.R
+import com.example.msd25_android.logic.SessionManager.AuthResponse
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    onLogin: () -> Unit,
+    onLogin: suspend (phone: String, password: String) -> AuthResponse,
     onGoToSignUp: () -> Unit
 ) {
     var phone by remember { mutableStateOf("") }
     var pwd by remember { mutableStateOf("") }
+
+    var failedMsg by remember { mutableStateOf("") }
+
+    val coroutineScope = rememberCoroutineScope()
 
     Scaffold(
         topBar = { CenterAlignedTopAppBar(title = { Text(" ") }) },
@@ -62,8 +72,21 @@ fun LoginScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
 
+                Text(
+                    text = failedMsg,
+                    color = Color(217, 97, 97, 255)
+                )
+
                 Button(
-                    onClick = onLogin,
+                    onClick = {
+                        Log.w("loginScreen", "onLogin triggered with $phone and $pwd")
+                        coroutineScope.launch(Dispatchers.IO) {
+                            val response = onLogin(phone, pwd)
+                            if (!response.success) {
+                            failedMsg = response.message
+                        } }
+
+                              },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp),

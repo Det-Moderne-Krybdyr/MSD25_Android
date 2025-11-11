@@ -1,5 +1,7 @@
 package com.example.msd25_android
 
+import android.app.Application
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,13 +19,22 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.*
+import androidx.datastore.preferences.*
+import androidx.datastore.preferences.core.Preferences
+import com.example.msd25_android.logic.SessionManager
+import com.example.msd25_android.ui.nav.AuthNav
+import com.example.msd25_android.ui.nav.HomeNav
 import com.example.msd25_android.ui.screens.*
 import com.example.msd25_android.ui.theme.MSD25_AndroidTheme
-import kotlin.math.absoluteValue
-import kotlin.math.roundToInt
+import com.example.msd25_android.ui.user_repository.UserRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,12 +48,21 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+enum class UserAuthState {
+    UNKNOWN,
+    AUTHENTICATED,
+    UNAUTHENTICATED
+}
+
+enum class AuthDestinations {
+    LOGIN,
+    SIGNUP
+}
+
 enum class AppDestinations(val label: String, val icon: ImageVector) {
     FRIENDS("Friends", Icons.Default.Person),
     HOME("Home", Icons.Default.Home),
     PROFILE("Profile", Icons.Default.AccountBox),
-    LOGIN("Login", Icons.Default.Home),
-    SIGNUP("SignUp", Icons.Default.Home),
     ADD_FRIEND("AddFriend", Icons.Default.Home),
     ADD_GROUP("AddGroup", Icons.Default.Home),
     GROUP("Group", Icons.Default.Home),
@@ -58,7 +78,7 @@ data class GroupModel(
     val expenses: SnapshotStateList<Expense>
 )
 
-private fun myBalanceFor(user: String, members: List<String>, expenses: List<Expense>): Double {
+fun myBalanceFor(user: String, members: List<String>, expenses: List<Expense>): Double {
     val balances = members.associateWith { 0.0 }.toMutableMap()
     if (members.isNotEmpty()) {
         expenses.forEach { e ->
@@ -70,73 +90,59 @@ private fun myBalanceFor(user: String, members: List<String>, expenses: List<Exp
     return balances[user] ?: 0.0
 }
 
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "setting"
+)
+
 @PreviewScreenSizes
 @Preview(showBackground = true)
 @Composable
 fun MSD25_AndroidApp() {
-    var current by remember { mutableStateOf(AppDestinations.HOME) }
+
+
+    val (userAuthState, setUserAuthState) = remember { mutableStateOf(UserAuthState.UNKNOWN) }
+    val (appCurrent, setAppCurrent) = remember { mutableStateOf(AppDestinations.HOME) }
+    val (authCurrent, setAuthCurrent) = remember { mutableStateOf(AuthDestinations.LOGIN) }
     val bottom = listOf(AppDestinations.FRIENDS, AppDestinations.HOME, AppDestinations.PROFILE)
     val cs = MaterialTheme.colorScheme
 
-    val currentUser = remember { "Mille" }
+    val application = LocalContext.current.applicationContext as Application
+    val userRepository = UserRepository(application.dataStore)
 
-    val roomies = remember {
-        GroupModel(
-            id = "roomies",
-            name = "Roomies",
-            members = listOf("Mille", "Julius", "Peter"),
-            expenses = mutableStateListOf()
-        )
-    }
-    val siblings = remember {
-        GroupModel(
-            id = "siblings",
-            name = "Siblings",
-            members = listOf("Mille", "Anna"),
-            expenses = mutableStateListOf()
-        )
-    }
-    val trip = remember {
-        GroupModel(
-            id = "trip-aarhus",
-            name = "Trip to Aarhus",
-            members = listOf("Mille", "Julius", "Peter", "Anna"),
-            expenses = mutableStateListOf()
-        )
+    val sessionManager = SessionManager(application, setUserAuthState, userRepository)
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        coroutineScope.launch(Dispatchers.IO) { sessionManager.restoreToken() }
     }
 
-    var selectedGroup by remember { mutableStateOf(roomies) }
-
-    val summaries = listOf(roomies, siblings, trip).map { g ->
-        GroupSummary(
-            id = g.id,
-            name = g.name,
-            balanceDkk = myBalanceFor(currentUser, g.members, g.expenses).roundToInt()
-        )
-    }
-
-    var amountForPay by remember { mutableStateOf(0.0) }
 
     Scaffold(
+
         bottomBar = {
-            NavigationBar(containerColor = cs.surface, contentColor = cs.onSurface) {
-                bottom.forEach { d ->
-                    NavigationBarItem(
-                        selected = d == current,
-                        onClick = { current = d },
-                        icon = { Icon(d.icon, contentDescription = d.label) },
-                        label = { Text(d.label) },
-                        modifier = Modifier.height(56.dp),
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = cs.primary,
-                            selectedTextColor = cs.primary,
-                            indicatorColor = cs.primary.copy(alpha = 0.15f),
-                            unselectedIconColor = cs.onSurface.copy(alpha = 0.6f),
-                            unselectedTextColor = cs.onSurface.copy(alpha = 0.6f)
+            when (userAuthState) {
+                UserAuthState.UNKNOWN -> {}
+                UserAuthState.AUTHENTICATED -> NavigationBar(containerColor = cs.surface, contentColor = cs.onSurface) {
+                    bottom.forEach { d ->
+                        NavigationBarItem(
+                            selected = d == appCurrent,
+                            onClick = { setAppCurrent(d) },
+                            icon = { Icon(d.icon, contentDescription = d.label) },
+                            label = { Text(d.label) },
+                            modifier = Modifier.height(56.dp),
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = cs.primary,
+                                selectedTextColor = cs.primary,
+                                indicatorColor = cs.primary.copy(alpha = 0.15f),
+                                unselectedIconColor = cs.onSurface.copy(alpha = 0.6f),
+                                unselectedTextColor = cs.onSurface.copy(alpha = 0.6f)
+                            )
                         )
-                    )
+                    }
                 }
+                UserAuthState.UNAUTHENTICATED -> {}
             }
+
         }
     ) { innerPadding ->
         Box(
@@ -144,73 +150,10 @@ fun MSD25_AndroidApp() {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            when (current) {
-                AppDestinations.FRIENDS -> FriendsScreen(
-                    onAddFriend = { current = AppDestinations.ADD_FRIEND }
-                )
-                AppDestinations.HOME -> HomeScreen(
-                    groups = summaries,
-                    onOpenGroup = { groupId ->
-                        selectedGroup = when (groupId) {
-                            roomies.id -> roomies
-                            siblings.id -> siblings
-                            trip.id -> trip
-                            else -> roomies
-                        }
-                        current = AppDestinations.GROUP
-                    },
-                    onCreateGroup = { current = AppDestinations.ADD_GROUP },
-                    onGoToFriends = { current = AppDestinations.FRIENDS }
-                )
-                AppDestinations.PROFILE -> ProfileScreen(
-                    onEdit = { current = AppDestinations.EDIT_PROFILE },
-                    onLogout = { current = AppDestinations.LOGIN }
-                )
-                AppDestinations.LOGIN -> LoginScreen(
-                    onLogin = { current = AppDestinations.HOME },
-                    onGoToSignUp = { current = AppDestinations.SIGNUP }
-                )
-                AppDestinations.SIGNUP -> SignUpScreen(
-                    onCreate = { current = AppDestinations.HOME },
-                    onGoToLogin = { current = AppDestinations.LOGIN }
-                )
-                AppDestinations.ADD_FRIEND -> AddFriendScreen(
-                    onDone = { current = AppDestinations.FRIENDS }
-                )
-                AppDestinations.ADD_GROUP -> CreateGroupScreen(
-                    onDone = { current = AppDestinations.HOME },
-                    onBack = { current = AppDestinations.HOME }
-                )
-                AppDestinations.GROUP -> GroupScreen(
-                    groupName = selectedGroup.name,
-                    members = selectedGroup.members,
-                    currentUser = currentUser,
-                    expenses = selectedGroup.expenses,
-                    onOpenDetails = { _, _, _ ->
-                        current = AppDestinations.GROUP_DETAILS
-                    },
-                    onBack = { current = AppDestinations.HOME }
-                )
-                AppDestinations.GROUP_DETAILS -> GroupDetailScreen(
-                    groupName = selectedGroup.name,
-                    members = selectedGroup.members,
-                    expenses = selectedGroup.expenses,
-                    currentUser = currentUser,
-                    onPay = {
-                        amountForPay = myBalanceFor(currentUser, selectedGroup.members, selectedGroup.expenses)
-                            .absoluteValue
-                        current = AppDestinations.PAY
-                    },
-                    onBack = { current = AppDestinations.GROUP }
-                )
-                AppDestinations.PAY -> PayScreen(
-                    amount = amountForPay,
-                    onDone = { current = AppDestinations.GROUP_DETAILS },
-                    onBack = { current = AppDestinations.GROUP_DETAILS }
-                )
-                AppDestinations.EDIT_PROFILE -> EditProfileScreen(
-                    onDone = { current = AppDestinations.PROFILE }
-                )
+            when (userAuthState) {
+                UserAuthState.UNKNOWN -> {}
+                UserAuthState.AUTHENTICATED -> HomeNav(appCurrent, setAppCurrent, sessionManager)
+                UserAuthState.UNAUTHENTICATED -> AuthNav(authCurrent, setAuthCurrent, sessionManager)
             }
         }
     }

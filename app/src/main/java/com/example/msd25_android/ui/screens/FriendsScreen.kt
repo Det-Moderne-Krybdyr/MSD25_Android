@@ -13,16 +13,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.msd25_android.logic.FriendsViewModel
+import com.example.msd25_android.logic.UserViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FriendsScreen(
-    viewModel: FriendsViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     onAddFriend: () -> Unit = {}  // handled by MainActivity
 ) {
     val cs = MaterialTheme.colorScheme
-    val friends by viewModel.friends.collectAsState()
 
     Scaffold(
         topBar = { CenterAlignedTopAppBar(title = { Text("Friends") }) }
@@ -53,8 +51,8 @@ fun FriendsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
-                items(friends) { friend ->
-                    FriendCard(name = friend.name)
+                items(0) { friend ->
+                    //FriendCard(name = friend.name)
                 }
             }
         }
