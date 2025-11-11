@@ -10,6 +10,7 @@ activityCompose = "1.8.0"
 composeBom = "2024.09.00"
 room = "2.6.1"
 datastoreCore = "1.1.7"
+datastorePreferencesCore = "1.1.7"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -31,6 +32,7 @@ room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastoreCore" }
+androidx-datastore-preferences-core = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferencesCore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

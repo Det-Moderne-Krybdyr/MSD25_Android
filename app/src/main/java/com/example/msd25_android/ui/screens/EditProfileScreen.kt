@@ -1,5 +1,7 @@
 package com.example.msd25_android.ui.screens
 
+import CustomDatePicker
+import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,26 +15,62 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.msd25_android.dataStore
+import com.example.msd25_android.logic.UserViewModel
+import com.example.msd25_android.logic.data.user.User
+import com.example.msd25_android.ui.user_repository.UserRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(
     onDone: () -> Unit,
-    onPickImage: (() -> Unit)? = null
-) {
-    var name by rememberSaveable { mutableStateOf("Mille Nordal Jakobsen") }
-    var email by rememberSaveable { mutableStateOf("mille@example.com") }
-    var phone by rememberSaveable { mutableStateOf("+45 12 34 56 78") }
-    var birthday by rememberSaveable { mutableStateOf("1999-05-12") }
-    var password by rememberSaveable { mutableStateOf("mille1234") }
-    var showPassword by rememberSaveable { mutableStateOf(false) }
+    onPickImage: (() -> Unit)? = null,
+    userViewModel: UserViewModel = viewModel(),
+
+    ) {
+    var user: User by remember { mutableStateOf(User(birthdate = Clock.System.now())) }
+    var name: String by remember { mutableStateOf("") }
+
+    val application = LocalContext.current.applicationContext as Application
+    val coroutineScope = rememberCoroutineScope()
+
     var notificationsEnabled by rememberSaveable { mutableStateOf(true) }
 
     val cs = MaterialTheme.colorScheme
     val scroll = rememberScrollState()
+
+    val initialDateMillis = LocalDate(2025, 1, 15)
+        .atStartOfDayIn(TimeZone.UTC)
+        .toEpochMilliseconds()
+
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = initialDateMillis,
+        initialDisplayMode = DisplayMode.Picker,
+    )
+
+    LaunchedEffect(Unit) {
+        coroutineScope.launch(Dispatchers.IO) { val phone = UserRepository(application.dataStore).currentPhoneNumber.first()
+            if (phone != null)  {
+                val dbUser = userViewModel.getUserByPhone(phone)
+                if (dbUser != null) {
+                    user = dbUser
+                    name = user.name
+                    datePickerState.selectedDateMillis = user.birthdate.toEpochMilliseconds()
+                }
+            }
+        }
+    }
 
     Scaffold(
         topBar = { CenterAlignedTopAppBar(title = { Text("Edit Profile") }) },
@@ -57,7 +95,7 @@ fun EditProfileScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = name.firstOrNull()?.uppercase() ?: "M",
+                    text = user.name.firstOrNull()?.uppercase() ?: "M",
                     style = MaterialTheme.typography.headlineLarge,
                     color = cs.onPrimaryContainer
                 )
@@ -90,40 +128,19 @@ fun EditProfileScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                label = { Text("Email") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                colors = fieldColors
-            )
+            InfoCard(label = "Email", value = user.email)
 
             Spacer(Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = phone,
-                onValueChange = { phone = it },
-                label = { Text("Phone") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                colors = fieldColors
-            )
+            InfoCard(label = "Phone", value = user.phoneNumber)
 
             Spacer(Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = birthday,
-                onValueChange = { birthday = it },
-                label = { Text("Birthday") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                colors = fieldColors
-            )
+            CustomDatePicker(state = datePickerState)
 
             Spacer(Modifier.height(12.dp))
 
-            OutlinedTextField(
+            /*OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Password") },
@@ -136,7 +153,7 @@ fun EditProfileScreen(
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = fieldColors
-            )
+            )*/
 
             Spacer(Modifier.height(16.dp))
 
@@ -164,7 +181,14 @@ fun EditProfileScreen(
             Spacer(Modifier.height(16.dp))
 
             Button(
-                onClick = onDone,
+                onClick = {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        user.name = name
+                        user.birthdate = Instant.fromEpochMilliseconds(datePickerState.selectedDateMillis!!)
+                        userViewModel.updateUser(user)
+                    }
+                    onDone()
+                          },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),

@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.*
+import androidx.datastore.preferences.core.Preferences
 import com.example.msd25_android.logic.SessionManager
 import com.example.msd25_android.ui.nav.AuthNav
 import com.example.msd25_android.ui.nav.HomeNav
@@ -151,7 +152,7 @@ fun MSD25_AndroidApp() {
         ) {
             when (userAuthState) {
                 UserAuthState.UNKNOWN -> {}
-                UserAuthState.AUTHENTICATED -> HomeNav(appCurrent, setAppCurrent, setUserAuthState)
+                UserAuthState.AUTHENTICATED -> HomeNav(appCurrent, setAppCurrent, sessionManager)
                 UserAuthState.UNAUTHENTICATED -> AuthNav(authCurrent, setAuthCurrent, sessionManager)
             }
         }

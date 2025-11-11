@@ -4,7 +4,6 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 
 
@@ -14,9 +13,9 @@ import kotlinx.datetime.Instant
 )
 data class User(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
-    val name: String,
-    val email: String,
-    @ColumnInfo(name = "phone_number") val phoneNumber: String,
-    val password: String,
-    val birthdate: Instant,
+    var name: String = "",
+    val email: String = "",
+    @ColumnInfo(name = "phone_number") val phoneNumber: String = "",
+    val password: String = "",
+    var birthdate: Instant,
 )

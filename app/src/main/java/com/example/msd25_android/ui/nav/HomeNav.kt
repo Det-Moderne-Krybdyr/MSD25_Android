@@ -6,10 +6,11 @@ import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.example.msd25_android.AppDestinations
 import com.example.msd25_android.GroupModel
-import com.example.msd25_android.UserAuthState
+import com.example.msd25_android.logic.SessionManager
 import com.example.msd25_android.myBalanceFor
 import com.example.msd25_android.ui.screens.AddFriendScreen
 import com.example.msd25_android.ui.screens.CreateGroupScreen
@@ -21,13 +22,15 @@ import com.example.msd25_android.ui.screens.GroupSummary
 import com.example.msd25_android.ui.screens.HomeScreen
 import com.example.msd25_android.ui.screens.PayScreen
 import com.example.msd25_android.ui.screens.ProfileScreen
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
 @Composable
-fun HomeNav(current: AppDestinations, setCurrent: (AppDestinations) -> Unit, setUserAuthState: (UserAuthState) -> Unit) {
+fun HomeNav(current: AppDestinations, setCurrent: (AppDestinations) -> Unit, sessionManager: SessionManager) {
 
-
+    val coroutineScope = rememberCoroutineScope()
     val currentUser = remember { "Mille" }
 
     val roomies = remember {
@@ -89,7 +92,7 @@ fun HomeNav(current: AppDestinations, setCurrent: (AppDestinations) -> Unit, set
         AppDestinations.PROFILE -> ProfileScreen(
             onEdit = { setCurrent(AppDestinations.EDIT_PROFILE) },
             onLogout = {
-                setUserAuthState(UserAuthState.UNAUTHENTICATED)
+                coroutineScope.launch(Dispatchers.IO) { sessionManager.logout() }
                 setCurrent(AppDestinations.HOME)
             }
         )

@@ -63,6 +63,7 @@ dependencies {
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     implementation(libs.androidx.datastore.core)
+    implementation(libs.androidx.datastore.preferences.core)
     ksp("androidx.room:room-compiler:$roomVersion")
 
     // Testing
@@ -77,5 +78,5 @@ dependencies {
     // Others
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
     implementation("org.mindrot:jbcrypt:0.4")
-    implementation("androidx.datastore:datastore-preferences:1.0.0")
+
 }
