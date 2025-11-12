@@ -1,5 +1,6 @@
 package com.example.msd25_android.ui.screens
 
+import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,16 +12,39 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.msd25_android.dataStore
 import com.example.msd25_android.logic.UserViewModel
+import com.example.msd25_android.logic.data.user.User
+import com.example.msd25_android.ui.user_repository.UserRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FriendsScreen(
-    onAddFriend: () -> Unit = {}  // handled by MainActivity
+    onAddFriend: () -> Unit = {},  // handled by MainActivity
+    userViewModel: UserViewModel = viewModel()
 ) {
     val cs = MaterialTheme.colorScheme
+
+    var friends: List<User> by remember { mutableStateOf(emptyList()) }
+    val userRepository = UserRepository((LocalContext.current.applicationContext as Application).dataStore)
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        coroutineScope.launch(Dispatchers.IO) {
+            val phone = userRepository.currentPhoneNumber.first()
+            val res = userViewModel.getUserWithFriends(phone!!)
+            if (res.success) {
+                friends = res.data!!.friends
+            }
+        }
+    }
 
     Scaffold(
         topBar = { CenterAlignedTopAppBar(title = { Text("Friends") }) }
@@ -51,8 +75,8 @@ fun FriendsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
-                items(0) { friend ->
-                    //FriendCard(name = friend.name)
+                items(friends) { friend ->
+                    FriendCard(name = friend.name)
                 }
             }
         }

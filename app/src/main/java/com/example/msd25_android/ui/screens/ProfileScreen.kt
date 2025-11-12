@@ -41,10 +41,11 @@ fun ProfileScreen(
     val scroll = rememberScrollState()
 
     LaunchedEffect(Unit) {
-        coroutineScope.launch(Dispatchers.IO) { val phone = UserRepository(application.dataStore).currentPhoneNumber.first()
+        coroutineScope.launch(Dispatchers.IO) {
+            val phone = UserRepository(application.dataStore).currentPhoneNumber.first()
             if (phone != null)  {
-                val dbUser = userViewModel.getUserByPhone(phone)
-                if (dbUser != null) user = dbUser
+                val res = userViewModel.getUserByPhone(phone)
+                if (res.data != null) user = res.data
             }
         }
     }

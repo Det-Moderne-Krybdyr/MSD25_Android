@@ -7,20 +7,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.msd25_android.R
-import com.example.msd25_android.logic.SessionManager.AuthResponse
+import com.example.msd25_android.logic.BackendResponse
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    onLogin: suspend (phone: String, password: String) -> AuthResponse,
+    onLogin: suspend (phone: String, password: String) -> BackendResponse<Unit>,
     onGoToSignUp: () -> Unit
 ) {
     var phone by remember { mutableStateOf("") }
@@ -29,6 +27,8 @@ fun LoginScreen(
     var failedMsg by remember { mutableStateOf("") }
 
     val coroutineScope = rememberCoroutineScope()
+
+    val cs = MaterialTheme.colorScheme
 
     Scaffold(
         topBar = { CenterAlignedTopAppBar(title = { Text(" ") }) },
@@ -74,7 +74,7 @@ fun LoginScreen(
 
                 Text(
                     text = failedMsg,
-                    color = Color(217, 97, 97, 255)
+                    color = cs.error
                 )
 
                 Button(

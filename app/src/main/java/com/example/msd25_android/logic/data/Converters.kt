@@ -20,4 +20,25 @@ class Converters {
     fun toBigDecimal(value: String?): BigDecimal? {
         return value?.let { BigDecimal(it) }
     }
+
+    enum class NotificationType(val value: String) {
+        EXPENSE("expense"),
+        GROUP("group"),
+        FRIEND("friend"),
+    }
+
+    @TypeConverter
+    fun toNotificationType(value: String?): NotificationType? {
+        when(value) {
+            "expense" -> NotificationType.EXPENSE
+            "group" -> NotificationType.GROUP
+            "friend" -> NotificationType.FRIEND
+        }
+        return null
+    }
+
+    @TypeConverter
+    fun fromNotificationType(value: NotificationType?): String? {
+        return value?.value
+    }
 }

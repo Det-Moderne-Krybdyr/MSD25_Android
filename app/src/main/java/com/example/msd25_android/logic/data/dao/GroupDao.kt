@@ -13,15 +13,12 @@ import com.example.msd25_android.logic.data.group.GroupWithMembers
 
 @Dao
 interface GroupDao {
-
     @Insert
     fun insertGroup(group: Group)
-
     @Update
     fun updateGroup(group: Group)
     @Insert
     fun insertGroupUserRef(ref: GroupUserRef)
-
     @Transaction
     @Query("SELECT * FROM `groups` WHERE id = :groupId")
     fun getGroupWithMembers(groupId: Long): GroupWithMembers?
