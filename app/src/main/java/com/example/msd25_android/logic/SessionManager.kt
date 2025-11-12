@@ -1,8 +1,6 @@
 package com.example.msd25_android.logic
 
 import android.app.Application
-import android.content.Context
-import android.util.Log
 import com.example.msd25_android.UserAuthState
 import com.example.msd25_android.logic.data.AppDatabase
 import com.example.msd25_android.logic.data.session.Session
@@ -17,21 +15,17 @@ class SessionManager(application: Application,
                      private val setUserAuthState: (UserAuthState) -> Unit,
                      private val userRepository: UserRepository
 ) {
-    data class AuthResponse(
-        val success: Boolean,
-        val message: String
-    )
     private val userDao = AppDatabase.getDatabase(application).userDao()
     private val sessionDao = AppDatabase.getDatabase(application).sessionDao()
 
     @OptIn(ExperimentalUuidApi::class)
-    suspend fun login(phone: String, password: String): AuthResponse {
+    suspend fun login(phone: String, password: String): BackendResponse<Unit> {
         val user = userDao.getUserByPhone(phone)
         if (user == null) {
-            return AuthResponse(false, "Invalid phone number")
+            return BackendResponse(false, "Invalid phone number")
         }
         if (!BCrypt.checkpw(password, user.password)) {
-            return AuthResponse(false, "Invalid password")
+            return BackendResponse(false, "Invalid password")
         }
         // create session
         val uuid = Uuid.random()
@@ -42,18 +36,18 @@ class SessionManager(application: Application,
         setUserAuthState(UserAuthState.AUTHENTICATED)
         userRepository.savePhoneNumber(user.phoneNumber)
         userRepository.saveUserToken(uuid.toString())
-        return AuthResponse(true, "")
+        return BackendResponse(true, "")
     }
 
-    suspend fun signup(user: User): AuthResponse {
+    suspend fun signup(user: User): BackendResponse<Unit> {
         val encrypted = BCrypt.hashpw(user.password, BCrypt.gensalt(5))
 
         if (userDao.getUserByPhone(user.phoneNumber) != null) {
-            return AuthResponse(false, "Phone number is already registered")
+            return BackendResponse(false, "Phone number is already registered")
         }
 
         if (userDao.getUserByEmail(user.email) != null) {
-            return AuthResponse(false, "Email is already registered")
+            return BackendResponse(false, "Email is already registered")
         }
 
         userDao.insertUser(User(
@@ -66,7 +60,7 @@ class SessionManager(application: Application,
         ))
         val newUser = userDao.getUserByPhone(user.phoneNumber)
         if (newUser == null) {
-            return AuthResponse(false, "Something went wrong!")
+            return BackendResponse(false, "Something went wrong!")
         }
 
         return login(user.phoneNumber, user.password)

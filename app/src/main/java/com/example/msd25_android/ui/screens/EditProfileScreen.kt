@@ -50,21 +50,16 @@ fun EditProfileScreen(
     val cs = MaterialTheme.colorScheme
     val scroll = rememberScrollState()
 
-    val initialDateMillis = LocalDate(2025, 1, 15)
-        .atStartOfDayIn(TimeZone.UTC)
-        .toEpochMilliseconds()
-
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = initialDateMillis,
         initialDisplayMode = DisplayMode.Picker,
     )
 
     LaunchedEffect(Unit) {
         coroutineScope.launch(Dispatchers.IO) { val phone = UserRepository(application.dataStore).currentPhoneNumber.first()
             if (phone != null)  {
-                val dbUser = userViewModel.getUserByPhone(phone)
-                if (dbUser != null) {
-                    user = dbUser
+                val res = userViewModel.getUserByPhone(phone)
+                if (res.data != null) {
+                    user = res.data
                     name = user.name
                     datePickerState.selectedDateMillis = user.birthdate.toEpochMilliseconds()
                 }
@@ -136,7 +131,7 @@ fun EditProfileScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            CustomDatePicker(state = datePickerState)
+            CustomDatePicker(state = datePickerState, borderColor = fieldColors.unfocusedIndicatorColor)
 
             Spacer(Modifier.height(12.dp))
 

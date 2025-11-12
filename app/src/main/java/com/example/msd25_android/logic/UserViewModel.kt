@@ -6,6 +6,8 @@ import com.example.msd25_android.logic.data.AppDatabase
 import com.example.msd25_android.logic.data.user.FriendCrossRef
 import com.example.msd25_android.logic.data.user.User
 import com.example.msd25_android.logic.data.user.UserWithFriends
+import com.example.msd25_android.logic.data.user.UserWithGroups
+import com.example.msd25_android.logic.data.user.UserWithNotifications
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlin.math.max
@@ -31,20 +33,27 @@ class UserViewModel(application: Application) : AndroidViewModel(application) {
         dao.insertFriendCrossRef(FriendCrossRef(userId2, userId1))
     }
 
-    fun getUserById(id: Long): User? {
-        return dao.getUserById(id)
+    fun getUserById(id: Long): BackendResponse<User> {
+        return BackendResponse.create(dao.getUserById(id), errorMsg = "User not found")
     }
 
-    fun getUserByEmail(email: String): User? {
-        return dao.getUserByEmail(email)
+    fun getUserByEmail(email: String): BackendResponse<User> {
+        return BackendResponse.create(dao.getUserByEmail(email), errorMsg = "User not found")
     }
 
-    fun getUserByPhone(phoneNumber: String): User? {
-        return dao.getUserByPhone(phoneNumber)
+    fun getUserByPhone(phone: String): BackendResponse<User> {
+        return BackendResponse.create(dao.getUserByPhone(phone), errorMsg = "User not found")
     }
 
-    fun getFriends(id: Long): UserWithFriends? {
-        return dao.getUserWithFriends(id)
+    fun getUserWithFriends(phone: String): BackendResponse<UserWithFriends> {
+        return BackendResponse.create(dao.getUserWithFriends(phone), errorMsg = "User not found")
     }
 
+    fun getUserWithGroups(phone: String): BackendResponse<UserWithGroups> {
+        return BackendResponse.create(dao.getUserWithGroups(phone), errorMsg = "User not found")
+    }
+
+    fun getUserWithNotifications(phone: String): BackendResponse<UserWithNotifications> {
+        return BackendResponse.create(dao.getUserWithNotifications(phone), errorMsg = "User not found")
+    }
 }

@@ -1,16 +1,19 @@
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.*
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.datetime.*
 import kotlinx.datetime.format.char
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CustomDatePicker(modifier: Modifier = Modifier, state: DatePickerState) {
+fun CustomDatePicker(modifier: Modifier = Modifier, state: DatePickerState, borderColor: Color = OutlinedTextFieldDefaults.colors().unfocusedIndicatorColor) {
     var isDatePickerOpen by rememberSaveable { mutableStateOf(false) }
 
     val cs = MaterialTheme.colorScheme
@@ -21,7 +24,8 @@ fun CustomDatePicker(modifier: Modifier = Modifier, state: DatePickerState) {
         focusedLabelColor = cs.primary,
         unfocusedLabelColor = cs.onSurfaceVariant,
         disabledLabelColor = cs.onSurface,
-        disabledTextColor = cs.onSurface
+        disabledTextColor = cs.onSurface,
+        disabledBorderColor = borderColor
     )
 
     if (isDatePickerOpen) {
@@ -66,8 +70,8 @@ fun CustomDatePicker(modifier: Modifier = Modifier, state: DatePickerState) {
             label = { Text("Birthdate") },
             singleLine = true,
             trailingIcon = {
-                Button(onClick = { isDatePickerOpen = true }) {
-                    Text("Choose")
+                IconButton(onClick = { isDatePickerOpen = true }) {
+                    Icon(imageVector = Icons.Default.DateRange, contentDescription = "Date picker", tint = cs.primary)
                 }
             },
             modifier = Modifier.fillMaxWidth(),

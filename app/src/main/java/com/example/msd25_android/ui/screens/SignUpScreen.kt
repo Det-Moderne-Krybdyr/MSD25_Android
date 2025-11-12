@@ -8,17 +8,14 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.msd25_android.R
-import com.example.msd25_android.logic.SessionManager.AuthResponse
-import com.example.msd25_android.logic.data.Converters
+import com.example.msd25_android.logic.BackendResponse
 import com.example.msd25_android.logic.data.user.User
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -27,7 +24,7 @@ import kotlinx.datetime.atStartOfDayIn
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignUpScreen(
-    onCreate: suspend (user: User) -> AuthResponse,
+    onCreate: suspend (user: User) -> BackendResponse<Unit>,
     onGoToLogin: () -> Unit
 ) {
     var name by rememberSaveable { mutableStateOf("") }
@@ -49,9 +46,11 @@ fun SignUpScreen(
         .toEpochMilliseconds()
 
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = initialDateMillis,
+        //initialSelectedDateMillis = initialDateMillis,
         initialDisplayMode = DisplayMode.Picker,
     )
+
+    val cs = MaterialTheme.colorScheme
 
     Scaffold(
         topBar = {
@@ -128,7 +127,7 @@ fun SignUpScreen(
 
             Text(
                 text = failedMsg,
-                color = Color(217, 97, 97, 255)
+                color = cs.error
             )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
