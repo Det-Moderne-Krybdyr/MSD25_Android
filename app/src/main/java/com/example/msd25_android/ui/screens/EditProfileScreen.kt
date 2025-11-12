@@ -19,7 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.msd25_android.dataStore
-import com.example.msd25_android.logic.UserViewModel
+import com.example.msd25_android.logic.viewmodels.UserViewModel
 import com.example.msd25_android.logic.data.user.User
 import com.example.msd25_android.ui.user_repository.UserRepository
 import kotlinx.coroutines.Dispatchers

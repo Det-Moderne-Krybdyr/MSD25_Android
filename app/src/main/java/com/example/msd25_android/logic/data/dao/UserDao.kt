@@ -23,7 +23,7 @@ interface UserDao {
     fun insertUser(user: User)
     @Query("DELETE FROM users WHERE id = :userId")
     fun deleteUserById(userId: Long)
-    @Insert
+    @Insert(onConflict = IGNORE)
     fun insertFriendCrossRef(crossRef: FriendCrossRef)
     @Query("SELECT * FROM users WHERE id = :userId")
     fun getUserById(userId: Long): User?

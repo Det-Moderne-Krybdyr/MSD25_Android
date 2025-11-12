@@ -17,7 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.msd25_android.dataStore
-import com.example.msd25_android.logic.UserViewModel
+import com.example.msd25_android.logic.viewmodels.UserViewModel
 import com.example.msd25_android.logic.data.user.User
 import com.example.msd25_android.ui.user_repository.UserRepository
 import kotlinx.coroutines.Dispatchers
@@ -32,7 +32,7 @@ fun FriendsScreen(
 ) {
     val cs = MaterialTheme.colorScheme
 
-    var friends: List<User> by remember { mutableStateOf(emptyList()) }
+    val friends = remember { mutableStateListOf<User>() }
     val userRepository = UserRepository((LocalContext.current.applicationContext as Application).dataStore)
     val coroutineScope = rememberCoroutineScope()
 
@@ -41,7 +41,7 @@ fun FriendsScreen(
             val phone = userRepository.currentPhoneNumber.first()
             val res = userViewModel.getUserWithFriends(phone!!)
             if (res.success) {
-                friends = res.data!!.friends
+                friends.addAll(res.data!!.friends)
             }
         }
     }

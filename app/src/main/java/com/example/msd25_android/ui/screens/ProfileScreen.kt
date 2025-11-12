@@ -16,7 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.msd25_android.logic.UserViewModel
+import com.example.msd25_android.logic.viewmodels.UserViewModel
 import com.example.msd25_android.logic.data.user.User
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.msd25_android.MainActivity

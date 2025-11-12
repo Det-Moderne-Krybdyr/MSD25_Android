@@ -3,6 +3,7 @@ package com.example.msd25_android.logic.data.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
+import androidx.room.OnConflictStrategy.Companion.IGNORE
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
@@ -13,8 +14,8 @@ import com.example.msd25_android.logic.data.group.GroupWithMembers
 
 @Dao
 interface GroupDao {
-    @Insert
-    fun insertGroup(group: Group)
+    @Insert(onConflict = IGNORE)
+    fun insertGroup(group: Group): Long
     @Update
     fun updateGroup(group: Group)
     @Insert

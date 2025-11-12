@@ -64,6 +64,7 @@ dependencies {
     implementation("androidx.room:room-ktx:$roomVersion")
     implementation(libs.androidx.datastore.core)
     implementation(libs.androidx.datastore.preferences.core)
+    implementation(libs.androidx.compose.runtime)
     ksp("androidx.room:room-compiler:$roomVersion")
 
     // Testing
