@@ -6,6 +6,7 @@ import androidx.room.RoomDatabase
 import android.content.Context
 import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.msd25_android.logic.data.dao.ExpenseDao
 import com.example.msd25_android.logic.data.dao.GroupDao
 import com.example.msd25_android.logic.data.dao.SessionDao
 import com.example.msd25_android.logic.data.dao.UserDao
@@ -40,6 +41,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun groupDao(): GroupDao
     abstract fun sessionDao(): SessionDao
+    abstract fun expenseDao(): ExpenseDao
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null

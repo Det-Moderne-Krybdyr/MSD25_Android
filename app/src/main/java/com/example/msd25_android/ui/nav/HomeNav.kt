@@ -11,6 +11,7 @@ import androidx.compose.runtime.setValue
 import com.example.msd25_android.AppDestinations
 import com.example.msd25_android.GroupModel
 import com.example.msd25_android.logic.SessionManager
+import com.example.msd25_android.logic.data.group.Group
 import com.example.msd25_android.myBalanceFor
 import com.example.msd25_android.ui.screens.AddFriendScreen
 import com.example.msd25_android.ui.screens.CreateGroupScreen
@@ -58,7 +59,7 @@ fun HomeNav(current: AppDestinations, setCurrent: (AppDestinations) -> Unit, ses
         )
     }
 
-    var selectedGroup by remember { mutableStateOf(roomies) }
+    var selectedGroup by remember { mutableStateOf<Group?>(null) }
 
     val summaries = listOf(roomies, siblings, trip).map { g ->
         GroupSummary(
@@ -76,18 +77,11 @@ fun HomeNav(current: AppDestinations, setCurrent: (AppDestinations) -> Unit, ses
             onAddFriend = { setCurrent(AppDestinations.ADD_FRIEND) }
         )
         AppDestinations.HOME -> HomeScreen(
-            groups = summaries,
-            onOpenGroup = { groupId ->
-                selectedGroup = when (groupId) {
-                    roomies.id -> roomies
-                    siblings.id -> siblings
-                    trip.id -> trip
-                    else -> roomies
-                }
+            onOpenGroup = { group ->
+                selectedGroup = group
                 setCurrent(AppDestinations.GROUP)
             },
-            onCreateGroup = { setCurrent(AppDestinations.ADD_GROUP) },
-            onGoToFriends = { setCurrent(AppDestinations.FRIENDS) }
+            onCreateGroup = { setCurrent(AppDestinations.ADD_GROUP) }
         )
         AppDestinations.PROFILE -> ProfileScreen(
             onEdit = { setCurrent(AppDestinations.EDIT_PROFILE) },
@@ -104,16 +98,13 @@ fun HomeNav(current: AppDestinations, setCurrent: (AppDestinations) -> Unit, ses
             onBack = { setCurrent(AppDestinations.HOME) }
         )
         AppDestinations.GROUP -> GroupScreen(
-            groupName = selectedGroup.name,
-            members = selectedGroup.members,
-            currentUser = currentUser,
-            expenses = selectedGroup.expenses,
-            onOpenDetails = { _, _, _ ->
+            group = selectedGroup!!,
+            onOpenDetails = {
                 setCurrent(AppDestinations.GROUP_DETAILS)
             },
             onBack = { setCurrent(AppDestinations.HOME) }
         )
-        AppDestinations.GROUP_DETAILS -> GroupDetailScreen(
+        AppDestinations.GROUP_DETAILS -> /*GroupDetailScreen(
             groupName = selectedGroup.name,
             members = selectedGroup.members,
             expenses = selectedGroup.expenses,
@@ -124,7 +115,7 @@ fun HomeNav(current: AppDestinations, setCurrent: (AppDestinations) -> Unit, ses
                 setCurrent(AppDestinations.PAY)
             },
             onBack = { setCurrent(AppDestinations.GROUP) }
-        )
+        )*/ {}
         AppDestinations.PAY -> PayScreen(
             amount = amountForPay,
             onDone = { setCurrent(AppDestinations.GROUP_DETAILS) },

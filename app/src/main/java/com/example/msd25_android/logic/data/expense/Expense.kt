@@ -18,9 +18,8 @@ import kotlinx.datetime.Instant
     ]
 )
 data class Expense(
-    @PrimaryKey(autoGenerate = true) val id: Long,
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val description: String,
-    val amount: BigDecimal,
     val paidBy: Long,
     val groupId: Long,
     val createdOn: Instant

@@ -31,26 +31,26 @@ class UserViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun getUserById(id: Long): BackendResponse<User> {
-        return BackendResponse.Companion.create(dao.getUserById(id), errorMsg = "User not found")
+        return BackendResponse.create(dao.getUserById(id), errorMsg = "User not found")
     }
 
     fun getUserByEmail(email: String): BackendResponse<User> {
-        return BackendResponse.Companion.create(dao.getUserByEmail(email), errorMsg = "User not found")
+        return BackendResponse.create(dao.getUserByEmail(email), errorMsg = "User not found")
     }
 
     fun getUserByPhone(phone: String): BackendResponse<User> {
-        return BackendResponse.Companion.create(dao.getUserByPhone(phone), errorMsg = "User not found")
+        return BackendResponse.create(dao.getUserByPhone(phone), errorMsg = "User not found")
     }
 
     fun getUserWithFriends(phone: String): BackendResponse<UserWithFriends> {
-        return BackendResponse.Companion.create(dao.getUserWithFriends(phone), errorMsg = "User not found")
+        return BackendResponse.create(dao.getUserWithFriends(phone), errorMsg = "User not found")
     }
 
     fun getUserWithGroups(phone: String): BackendResponse<UserWithGroups> {
-        return BackendResponse.Companion.create(dao.getUserWithGroups(phone), errorMsg = "User not found")
+        return BackendResponse.create(dao.getUserWithGroups(phone), errorMsg = "User not found")
     }
 
     fun getUserWithNotifications(phone: String): BackendResponse<UserWithNotifications> {
-        return BackendResponse.Companion.create(dao.getUserWithNotifications(phone), errorMsg = "User not found")
+        return BackendResponse.create(dao.getUserWithNotifications(phone), errorMsg = "User not found")
     }
 }

@@ -1,5 +1,8 @@
 package com.example.msd25_android.ui.screens
 
+import android.app.Application
+import android.icu.math.BigDecimal
+import android.icu.math.MathContext
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,33 +13,74 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.msd25_android.dataStore
+import com.example.msd25_android.logic.data.expense.ExpenseWithShares
+import com.example.msd25_android.logic.data.group.Group
+import com.example.msd25_android.logic.data.user.User
+import com.example.msd25_android.logic.viewmodels.GroupViewModel
+import com.example.msd25_android.logic.viewmodels.ExpenseViewModel
+import com.example.msd25_android.ui.user_repository.UserRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import java.math.RoundingMode
+import kotlin.collections.fold
+import com.example.msd25_android.ui.components.*
 
 data class Expense(val name: String, val amount: Double, val note: String)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupScreen(
-    groupName: String,
-    members: List<String>,
-    currentUser: String,
-    expenses: SnapshotStateList<Expense>,
-    onOpenDetails: (members: List<String>, expenses: List<Expense>, currentUser: String) -> Unit,
+    groupViewModel: GroupViewModel = viewModel(),
+    expenseViewModel: ExpenseViewModel = viewModel(),
+    group: Group,
+    onOpenDetails: () -> Unit,
     onBack: () -> Unit = {}
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
+    val members = remember { mutableStateListOf<User>() }
+    val expenses = remember { mutableStateListOf<ExpenseWithShares>() }
+    var phone by remember { mutableStateOf("") }
+
+    val userRepository = UserRepository((LocalContext.current.applicationContext as Application).dataStore)
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(showAddDialog) {
+        coroutineScope.launch(Dispatchers.IO) {
+            phone = userRepository.currentPhoneNumber.first()!!
+
+            val memberRes = groupViewModel.getGroupWithMembers(group.id)
+            if (memberRes.success) {
+                members.clear()
+                members.addAll(memberRes.data!!.members)
+            }
+            val expenseRes = groupViewModel.getGroupWithExpenses(group.id)
+            if (expenseRes.success) {
+                val ids = expenseRes.data!!.expenses.map { it.id }
+                expenses.clear()
+                val sharesRes = expenseViewModel.getExpensesWithShares(ids)
+                if (sharesRes.success) {
+                    expenses.clear()
+                    expenses.addAll(sharesRes.data!!)
+                }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(groupName) },
+                title = { Text(group.name) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -62,9 +106,11 @@ fun GroupScreen(
         },
         bottomBar = {
             Surface(tonalElevation = 2.dp) {
-                Box(Modifier.fillMaxWidth().padding(16.dp)) {
+                Box(Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)) {
                     Button(
-                        onClick = { onOpenDetails(members, expenses, currentUser) },
+                        onClick = { onOpenDetails() },
                         modifier = Modifier.fillMaxWidth()
                     ) { Text("DETAILS") }
                 }
@@ -91,18 +137,23 @@ fun GroupScreen(
 
     if (showAddDialog) {
         AddExpenseDialog(
+            group = group,
+            phone = phone,
             members = members,
-            onDismiss = { showAddDialog = false },
-            onConfirm = { name, amount, note ->
-                expenses.add(Expense(name = name, amount = amount, note = note.trim()))
+            onDismiss = {
                 showAddDialog = false
-            }
+
+                        },
         )
     }
 }
 
 @Composable
-private fun ExpenseBubble(expense: Expense) {
+private fun ExpenseBubble(expense: ExpenseWithShares) {
+
+    val amount: BigDecimal = expense.shares.fold(BigDecimal.ZERO) {acc, share ->
+        acc.add(share.amountOwed)
+    }
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.End
@@ -113,8 +164,8 @@ private fun ExpenseBubble(expense: Expense) {
         ) {
             Column(Modifier.padding(12.dp)) {
                 Text(
-                    text = "${expense.name} spent ${"%.2f".format(expense.amount)} kr" +
-                            if (expense.note.isNotBlank()) " on ${expense.note}" else "",
+                    text = "${expense.user.name} spent ${amount.format(-1, 2)} kr" +
+                            if (expense.expense.description.isNotBlank()) " on ${expense.expense.description}" else "",
                     style = MaterialTheme.typography.titleMedium
                 )
             }
@@ -122,84 +173,5 @@ private fun ExpenseBubble(expense: Expense) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun AddExpenseDialog(
-    members: List<String>,
-    onDismiss: () -> Unit,
-    onConfirm: (name: String, amount: Double, note: String) -> Unit
-) {
-    var selectedName by remember { mutableStateOf(members.first()) }
-    var amountText by remember { mutableStateOf("") }
-    var note by remember { mutableStateOf("") }
-    val amountIsValid = amountText.toDoubleOrNull()?.let { it >= 0.0 } == true
-    var expanded by remember { mutableStateOf(false) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Add expense") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    OutlinedTextField(
-                        value = selectedName,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Who paid?") },
-                        modifier = Modifier.weight(1f)
-                    )
-                    IconButton(onClick = { expanded = true }) {
-                        Icon(
-                            imageVector = Icons.Filled.ArrowDropDown,
-                            contentDescription = "Open menu"
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        members.forEach { name ->
-                            DropdownMenuItem(
-                                text = { Text(name) },
-                                onClick = {
-                                    selectedName = name
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
-                }
 
-                OutlinedTextField(
-                    value = amountText,
-                    onValueChange = {
-                        amountText = it
-                            .filter { ch -> ch.isDigit() || ch == '.' || ch == ',' }
-                            .replace(',', '.')
-                    },
-                    label = { Text("Amount (kr)") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
-                        imeAction = ImeAction.Next
-                    )
-                )
-
-                OutlinedTextField(
-                    value = note,
-                    onValueChange = { note = it },
-                    label = { Text("Note (what for?)") }
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(
-                enabled = amountIsValid,
-                onClick = { onConfirm(selectedName, amountText.toDouble(), note) }
-            ) { Text("Add") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
-        }
-    )
-}

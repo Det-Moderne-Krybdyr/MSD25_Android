@@ -1,5 +1,6 @@
 package com.example.msd25_android.ui.screens
 
+import android.app.Application
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -8,25 +9,50 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.msd25_android.R
+import com.example.msd25_android.dataStore
+import com.example.msd25_android.logic.data.group.Group
+import com.example.msd25_android.logic.viewmodels.UserViewModel
+import com.example.msd25_android.ui.user_repository.UserRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 data class GroupSummary(val id: String, val name: String, val balanceDkk: Int)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    groups: List<GroupSummary>,
-    onOpenGroup: (groupId: String) -> Unit,
+    onOpenGroup: (group: Group) -> Unit,
     onCreateGroup: () -> Unit,
-    onGoToFriends: () -> Unit
+    userViewModel: UserViewModel = viewModel(),
 ) {
     val cs = MaterialTheme.colorScheme
+    val groups = remember { mutableStateListOf<Group>() }
+
+    val application = LocalContext.current.applicationContext as Application
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        coroutineScope.launch(Dispatchers.IO) { val phone = UserRepository(application.dataStore).currentPhoneNumber.first()
+            if (phone != null)  {
+                val res = userViewModel.getUserWithGroups(phone)
+                if (res.success) groups.addAll(res.data!!.groups)
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -69,7 +95,7 @@ fun HomeScreen(
                 modifier = Modifier.weight(1f, fill = true)
             ) {
                 items(groups, key = { it.id }) { g ->
-                    GroupCard(group = g, onClick = { onOpenGroup(g.id) })
+                    GroupCard(group = g, onClick = { onOpenGroup(g) })
                 }
             }
         }
@@ -77,7 +103,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun GroupCard(group: GroupSummary, onClick: () -> Unit) {
+private fun GroupCard(group: Group, onClick: () -> Unit) {
     val cs = MaterialTheme.colorScheme
 
     ElevatedCard(
@@ -96,7 +122,7 @@ private fun GroupCard(group: GroupSummary, onClick: () -> Unit) {
                         )
                     )
             ) {
-                val bal = group.balanceDkk
+                val bal = 0
                 val text = if (bal >= 0) "+$bal dkk" else "$bal dkk"
                 val labelBg = if (bal >= 0) cs.tertiaryContainer else cs.errorContainer
                 val labelFg = if (bal >= 0) cs.onTertiaryContainer else cs.onErrorContainer
