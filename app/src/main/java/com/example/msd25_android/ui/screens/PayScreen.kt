@@ -1,5 +1,7 @@
 package com.example.msd25_android.ui.screens
 
+import android.app.Application
+import android.icu.math.BigDecimal
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
@@ -17,22 +19,42 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.msd25_android.R
+import com.example.msd25_android.dataStore
+import com.example.msd25_android.logic.data.group.Group
+import com.example.msd25_android.logic.viewmodels.ExpenseViewModel
+import com.example.msd25_android.ui.user_repository.UserRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PayScreen(
-    amount: Double,
+    amount: BigDecimal,
+    group: Group,
     onDone: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    expenseViewModel: ExpenseViewModel = viewModel()
 ) {
     val cs = MaterialTheme.colorScheme
+    val coroutineScope = rememberCoroutineScope()
+    var phone by remember { mutableStateOf("") }
+    val userRepository = UserRepository((LocalContext.current.applicationContext as Application).dataStore)
+
+    LaunchedEffect(Unit) {
+        coroutineScope.launch(Dispatchers.IO) {
+            phone = userRepository.currentPhoneNumber.first()!!
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -75,13 +97,18 @@ fun PayScreen(
                 )
 
                 Text(
-                    text = "%.2f kr".format(amount),
+                    text = amount.format(-1, 2),
                     style = MaterialTheme.typography.headlineLarge.copy(color = cs.primary)
                 )
 
                 SwipeToConfirm(
                     text = "Slide to pay",
-                    onConfirmed = onDone
+                    onConfirmed = {
+                        coroutineScope.launch(Dispatchers.IO) {
+                            expenseViewModel.payAllDebts(group.id, phone)
+                        }
+                        onDone()
+                    }
                 )
             }
         }
@@ -98,7 +125,7 @@ private fun SwipeToConfirm(
     val cs = MaterialTheme.colorScheme
     val density = LocalDensity.current
 
-    var trackWidthPx by remember { mutableStateOf(0f) }
+    var trackWidthPx by remember { mutableFloatStateOf(0f) }
     val thumbSizeDp = 48.dp
     val thumbSizePx = with(density) { thumbSizeDp.toPx() }
 

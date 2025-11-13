@@ -36,8 +36,6 @@ import java.math.RoundingMode
 import kotlin.collections.fold
 import com.example.msd25_android.ui.components.*
 
-data class Expense(val name: String, val amount: Double, val note: String)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupScreen(

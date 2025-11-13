@@ -71,25 +71,6 @@ enum class AppDestinations(val label: String, val icon: ImageVector) {
     EDIT_PROFILE("EditProfile", Icons.Default.Home)
 }
 
-data class GroupModel(
-    val id: String,
-    val name: String,
-    val members: List<String>,
-    val expenses: SnapshotStateList<Expense>
-)
-
-fun myBalanceFor(user: String, members: List<String>, expenses: List<Expense>): Double {
-    val balances = members.associateWith { 0.0 }.toMutableMap()
-    if (members.isNotEmpty()) {
-        expenses.forEach { e ->
-            val share = e.amount / members.size
-            members.forEach { m -> balances[m] = (balances[m] ?: 0.0) - share }
-            balances[e.name] = (balances[e.name] ?: 0.0) + e.amount
-        }
-    }
-    return balances[user] ?: 0.0
-}
-
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
     name = "setting"
 )

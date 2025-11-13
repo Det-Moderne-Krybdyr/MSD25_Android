@@ -16,9 +16,7 @@ import kotlinx.datetime.Instant
 )
 data class ExpenseShare(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    var expenseId: Long = 0,
+    val expenseId: Long = 0,
     val userId: Long,
     val amountOwed: BigDecimal,
-    val isSettled: Boolean = false,
-    val settledAt: Instant? = null
 )
