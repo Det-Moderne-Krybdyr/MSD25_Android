@@ -45,7 +45,7 @@ private val users = listOf(
     User(
         name = "Marie Juhl",
         email = "majuh23@student.sdu.dk",
-        phoneNumber = "01927409",
+        phoneNumber = "51851206",
         password = BCrypt.hashpw("1234", BCrypt.gensalt()),
         birthdate = Clock.System.now()
     ),
