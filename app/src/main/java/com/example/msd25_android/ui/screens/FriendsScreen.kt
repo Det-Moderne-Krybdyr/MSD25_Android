@@ -56,7 +56,7 @@ fun FriendsScreen(
                 .padding(16.dp)
         ) {
             Button(
-                onClick = onAddFriend, // ✅ navigate to AddFriendScreen
+                onClick = onAddFriend,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
