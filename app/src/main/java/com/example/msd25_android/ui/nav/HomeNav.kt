@@ -71,7 +71,8 @@ fun HomeNav(current: AppDestinations, setCurrent: (AppDestinations) -> Unit, ses
                 amountForPay = amount
                 setCurrent(AppDestinations.PAY)
             },
-            onBack = { setCurrent(AppDestinations.GROUP) }
+            onBack = { setCurrent(AppDestinations.GROUP) },
+            onDelete = { setCurrent(AppDestinations.HOME) }
         )
         AppDestinations.PAY -> PayScreen(
             amount = amountForPay,

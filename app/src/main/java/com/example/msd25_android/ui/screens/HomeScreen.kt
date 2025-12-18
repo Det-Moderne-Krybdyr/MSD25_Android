@@ -28,6 +28,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.msd25_android.R
 import com.example.msd25_android.dataStore
 import com.example.msd25_android.logic.data.models.Group
+import com.example.msd25_android.logic.services.GroupService
 import com.example.msd25_android.logic.services.UserService
 
 import com.example.msd25_android.ui.user_repository.UserRepository
@@ -46,9 +47,7 @@ fun HomeScreen(
 ) {
     val cs = MaterialTheme.colorScheme
     val groups = remember { mutableStateListOf<Group>() }
-    var phone by remember { mutableStateOf("") }
 
-    val application = LocalContext.current.applicationContext as Application
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
@@ -102,7 +101,7 @@ fun HomeScreen(
                 modifier = Modifier.weight(1f, fill = true)
             ) {
                 items(groups, key = { it.id!! }) { g ->
-                    GroupCard(group = g, onClick = { onOpenGroup(g) }, phone = phone)
+                    GroupCard(group = g, onClick = { onOpenGroup(g) })
                 }
             }
         }
@@ -112,18 +111,23 @@ fun HomeScreen(
 @Composable
 private fun GroupCard(
     group: Group,
-    phone: String,
     onClick: () -> Unit,
+    groupService: GroupService = viewModel()
 ) {
     val cs = MaterialTheme.colorScheme
     var balanceDkk by remember { mutableStateOf(BigDecimal.ZERO) }
 
+    val userRepository = UserRepository((LocalContext.current.applicationContext as Application).dataStore)
     val coroutineScope = rememberCoroutineScope();
 
     LaunchedEffect(Unit) {
         coroutineScope.launch(Dispatchers.IO) {
-            /*val res = expenseViewModel.getBalanceForUserInGroup(group.id, phone)
-            if (res.success) balanceDkk = res.data!!*/
+            val userId = userRepository.currentUserId.first()!!
+            groupService.getPersonalBalance(userId.toLong(), group.id) { response ->
+                if (response.success) {
+                    balanceDkk = response.data!!
+                }
+            }
         }
     }
 
@@ -165,7 +169,7 @@ private fun GroupCard(
             }
             Surface(color = cs.surface, tonalElevation = 1.dp) {
                 Text(
-                    text = group.name!!,
+                    text = group.name,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 14.dp, vertical = 12.dp),

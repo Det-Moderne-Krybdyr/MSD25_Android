@@ -44,6 +44,7 @@ import com.example.msd25_android.logic.data.models.Expense
 import com.example.msd25_android.logic.data.models.ExpenseShare
 import com.example.msd25_android.logic.data.models.Group
 import com.example.msd25_android.logic.data.models.User
+import com.example.msd25_android.logic.services.GroupService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -53,11 +54,12 @@ import kotlin.collections.forEach
 @Composable
 fun AddExpenseDialog(
     group: Group,
-    phone: String,
+    userId: Long,
     members: List<User>,
     onDismiss: () -> Unit,
+    groupService: GroupService = viewModel()
 ) {
-    var paidBy by remember { mutableStateOf(members.first { it.phone_number == phone }) }
+    var paidBy by remember { mutableStateOf(members.first() { it.id == userId }) }
     var amountText by remember { mutableStateOf("0") }
     var note by remember { mutableStateOf("") }
     val amountIsValid = amountText.toDoubleOrNull()?.let { it >= 0.0 } == true
@@ -81,7 +83,7 @@ fun AddExpenseDialog(
             }
         }
         val numShares = expenseShareCardData.filter { it.value.isChecked && !it.value.isChanged }.size
-        val shareAmount = splitAmount.divide(BigDecimal(numShares), mc)
+        val shareAmount = if (numShares > 0) splitAmount.divide(BigDecimal(numShares), mc) else BigDecimal.ZERO
         expenseShareCardData.forEach {
             if (it.value.isChecked && !it.value.isChanged) {
                 it.value = it.value.copy(amount = shareAmount)
@@ -96,7 +98,7 @@ fun AddExpenseDialog(
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(
-                        value = paidBy.name!!,
+                        value = paidBy.name,
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Who paid?") },
@@ -114,7 +116,7 @@ fun AddExpenseDialog(
                     ) {
                         members.forEach { member ->
                             DropdownMenuItem(
-                                text = { Text(member.name!!) },
+                                text = { Text(member.name) },
                                 onClick = {
                                     paidBy = member
                                     expanded = false
@@ -150,7 +152,7 @@ fun AddExpenseDialog(
                     //verticalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier.weight(1f, fill = true)
                 ) {
-                    items(expenseShareCardData, key = { it.value.user.id!! }) { e ->
+                    items(expenseShareCardData, key = { it.value.user.id }) { e ->
                         ExpenseShareCard(e, calculateShares)
                     }
                 }
@@ -158,27 +160,28 @@ fun AddExpenseDialog(
         },
         confirmButton = {
             TextButton(
-                enabled = amountIsValid,
+                enabled = amountIsValid && note.isNotBlank(),
                 onClick = {
                     coroutineScope.launch(Dispatchers.IO) {
 
                         val shares: MutableList<ExpenseShare> = mutableListOf()
                         expenseShareCardData.forEach {
-                            shares.add(ExpenseShare(
-                                user_id = it.value.user.id,
-                                amount = it.value.amount,
-                            ))
+                            if (it.value.isChecked && it.value.amount.compareTo(BigDecimal.ZERO) == 1) {
+                                shares.add(ExpenseShare(
+                                    user_id = it.value.user.id,
+                                    amount = it.value.amount,
+                                ))
+                            }
                         }
                         val expense = Expense(
                             description = note,
-                            paid_by_id = paidBy.id!!,
+                            paid_by_id = paidBy.id,
                             group_id = group.id,
                             expense_shares = shares
                         )
 
-                        // TODO: make expense in backend
+                        groupService.postExpense(expense) {onDismiss()}
                     }
-                    onDismiss()
                 }
             ) { Text("Add") }
         },
@@ -237,7 +240,7 @@ fun ExpenseShareCard(data: MutableState<ExpenseShareCardData>, calculateCallback
                     data.value = data.value.copy(amount = amount)
                     calculateCallback()
                 },
-                label = { Text(data.value.user.name!!) },
+                label = { Text(data.value.user.name) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = data.value.isChecked,

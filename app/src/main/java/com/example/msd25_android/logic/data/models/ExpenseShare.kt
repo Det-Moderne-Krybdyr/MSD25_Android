@@ -9,6 +9,7 @@ data class ExpenseShare(
     val expense_id: Long = 0,
     val user_id: Long = 0,
     val user: User = User(),
+    val settled: Boolean = false,
     @Serializable(with = BigDecimalSerializer::class)
     val amount: BigDecimal = BigDecimal.ZERO,
 )

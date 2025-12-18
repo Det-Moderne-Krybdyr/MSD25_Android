@@ -9,6 +9,7 @@ import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -31,6 +32,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.msd25_android.R
 import com.example.msd25_android.dataStore
 import com.example.msd25_android.logic.data.models.Group
+import com.example.msd25_android.logic.data.models.PayInfos
+import com.example.msd25_android.logic.services.GroupService
 import com.example.msd25_android.ui.user_repository.UserRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -44,27 +47,20 @@ fun PayScreen(
     group: Group,
     onDone: () -> Unit,
     onBack: () -> Unit,
+    groupService: GroupService = viewModel()
 ) {
     val cs = MaterialTheme.colorScheme
     val coroutineScope = rememberCoroutineScope()
-    var phone by remember { mutableStateOf("") }
-    val userRepository = UserRepository((LocalContext.current.applicationContext as Application).dataStore)
+    var payInfos by remember {mutableStateOf(PayInfos())}
+    //val userRepository = UserRepository((LocalContext.current.applicationContext as Application).dataStore)
 
     LaunchedEffect(Unit) {
         coroutineScope.launch(Dispatchers.IO) {
-            /*phone = userRepository.currentUserId.first()!!
-            // get group members
-            val res = groupViewModel.getGroupWithMembers(group.id)
-            if (res.success) {
-                res.data!!.members.forEach { member ->
-                    if (member.phoneNumber == phone) return@forEach
-                    val balanceRes = expenseViewModel.getBalanceBetweenUsers(group.id, phone, member.id)
-                    if (!balanceRes.success) return@forEach
-                    if (balanceRes.data!!.amount > BigDecimal.ZERO) {
-                        debts.add(balanceRes.data)
-                    }
+            groupService.getPaymentInfo(group.id) { response ->
+                if (response.success) {
+                    payInfos = response.data!!
                 }
-            }*/
+            }
         }
     }
 
@@ -90,9 +86,10 @@ fun PayScreen(
                     text = "Slide to pay",
                     onConfirmed = {
                         coroutineScope.launch(Dispatchers.IO) {
-                            //expenseViewModel.payAllDebts(group.id, phone)
+                            groupService.payDebtsToGroup(group.id) {
+                                onDone()
+                            }
                         }
-                        onDone()
                     }
                 )
             }
@@ -132,9 +129,9 @@ fun PayScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.weight(1f)
                 ) {
-                    /*items(debts) { debt ->
-                        MemberBalanceRow(name = debt.user2.name, balance = debt.amount)
-                    }*/
+                    items(payInfos.infos) { info ->
+                        MemberBalanceRow(name = info.user.name, balance = info.amount)
+                    }
                 }
             }
         }

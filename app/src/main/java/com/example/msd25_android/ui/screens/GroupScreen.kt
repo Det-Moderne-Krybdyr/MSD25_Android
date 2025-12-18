@@ -12,52 +12,56 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.msd25_android.dataStore
 import com.example.msd25_android.logic.data.models.Expense
 import com.example.msd25_android.logic.data.models.Group
 import com.example.msd25_android.logic.data.models.User
+import com.example.msd25_android.logic.services.GroupService
 import com.example.msd25_android.ui.user_repository.UserRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.collections.fold
 import com.example.msd25_android.ui.components.*
+import kotlinx.coroutines.flow.first
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupScreen(
     group: Group,
     onOpenDetails: () -> Unit,
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    groupService: GroupService = viewModel()
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
     val members = remember { mutableStateListOf<User>() }
     val expenses = remember { mutableStateListOf<Expense>() }
-    var phone by remember { mutableStateOf("") }
+    var userId by remember { mutableIntStateOf(0) }
 
     val userRepository = UserRepository((LocalContext.current.applicationContext as Application).dataStore)
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(showAddDialog) {
         coroutineScope.launch(Dispatchers.IO) {
-            /*phone = userRepository.currentUserId.first()!!
-
-            val memberRes = groupViewModel.getGroupWithMembers(group.id)
-            if (memberRes.success) {
-                members.clear()
-                members.addAll(memberRes.data!!.members)
-            }
-            val expenseRes = groupViewModel.getGroupWithExpenses(group.id)
-            if (expenseRes.success) {
-                val ids = expenseRes.data!!.expenses.map { it.id }
-                expenses.clear()
-                val sharesRes = expenseViewModel.getExpensesWithShares(ids)
-                if (sharesRes.success) {
+            groupService.getExpenses(group.id) { response ->
+                if (response.success) {
                     expenses.clear()
-                    expenses.addAll(sharesRes.data!!)
+                    expenses.addAll(response.data!!)
                 }
-            }*/
+            }
+
+            groupService.getGroupInfo(group.id) { response ->
+                if (response.success) {
+                    members.clear()
+                    members.addAll(response.data!!.members)
+                }
+            }
+
+            userId = userRepository.currentUserId.first()!!
         }
     }
 
@@ -119,14 +123,13 @@ fun GroupScreen(
         }
     }
 
-    if (showAddDialog) {
+    if (showAddDialog && members.isNotEmpty()) { // we must have retrieved members first
         AddExpenseDialog(
             group = group,
-            phone = phone,
+            userId = userId.toLong(),
             members = members,
             onDismiss = {
                 showAddDialog = false
-
                         },
         )
     }
@@ -135,7 +138,7 @@ fun GroupScreen(
 @Composable
 private fun ExpenseBubble(expense: Expense) {
 
-    val amount: BigDecimal = expense.expense_shares!!.fold(BigDecimal.ZERO) {acc, share ->
+    val amount: BigDecimal = expense.expense_shares.fold(BigDecimal.ZERO) {acc, share ->
         acc.add(share.amount)
     }
     Row(
@@ -146,12 +149,46 @@ private fun ExpenseBubble(expense: Expense) {
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth(0.85f)
         ) {
-            Column(Modifier.padding(12.dp)) {
-                Text(
-                    text = "${expense.paid_by_user!!.name} spent ${amount.format(-1, 2)} kr" +
-                            if (expense.description!!.isNotBlank()) " on ${expense.description}" else "",
-                    style = MaterialTheme.typography.titleMedium
-                )
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp)
+            ) {
+                var leftHeightPx by remember { mutableIntStateOf(0) }
+                val density = LocalDensity.current
+
+                Column(
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .onGloballyPositioned { coords ->
+                            leftHeightPx = coords.size.height
+                        }
+                ) {
+                    Text(
+                        text = expense.paid_by_user.name,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = amount.format(-1, 2),
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                    Text(
+                        text = expense.description,
+                        style = MaterialTheme .typography.titleSmall
+                    )
+                }
+
+                val leftHeightDp = with(density) { leftHeightPx.toDp() }
+
+                LazyColumn(
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .heightIn(max = leftHeightDp)
+                ) {
+                    items(expense.expense_shares) { share ->
+                        Text(
+                            text = "${share.user.name.split(" ")[0]} - ${share.amount.format(-1, 2)}"
+                        )
+                    }
+                }
             }
         }
     }

@@ -8,6 +8,7 @@ data class Group(
     val id: Long = 0,
     val name: String = "",
     val members: List<User> = listOf(),
+    val expenses: List<Expense> = listOf(),
     @Serializable(with = ISODateSerializer::class)
     val created_on: Long = 0,
 )

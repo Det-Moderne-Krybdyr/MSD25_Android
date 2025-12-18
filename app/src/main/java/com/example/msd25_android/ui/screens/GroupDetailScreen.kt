@@ -10,10 +10,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.msd25_android.dataStore
 import com.example.msd25_android.logic.data.models.Group
 import com.example.msd25_android.logic.data.models.User
+import com.example.msd25_android.logic.services.GroupService
 import com.example.msd25_android.ui.user_repository.UserRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -41,29 +44,37 @@ fun GroupDetailScreen(
     group: Group,
     onPay: (amount: BigDecimal) -> Unit,
     onBack: () -> Unit,
+    onDelete: () -> Unit,
+    groupService: GroupService = viewModel()
 ) {
     val cs = MaterialTheme.colorScheme
-    val balances = remember { mutableStateMapOf<String, BigDecimal>() }
+    val balances = remember { mutableStateMapOf<Long, BigDecimal>() }
     var myBalance by remember { mutableStateOf(BigDecimal.ZERO) }
     val members = remember { mutableStateListOf<User>() }
-    var phone by remember { mutableStateOf("") }
+    var userId by remember { mutableLongStateOf(0)}
 
     val userRepository = UserRepository((LocalContext.current.applicationContext as Application).dataStore)
     val coroutineScope = rememberCoroutineScope()
 
     suspend fun getData() {
-        /*phone = userRepository.currentUserId.first()!!
-        members.clear()
-        val memberRes = groupViewModel.getGroupWithMembers(group.id)
-        if (memberRes.success) members.addAll(memberRes.data!!.members)
-
-        members.forEach { member ->
-            val expenseRes = expenseViewModel.getBalanceForUserInGroup(group.id, member.phoneNumber)
-            if (expenseRes.success) {
-                balances[member.phoneNumber] = expenseRes.data!!
+        userId = userRepository.currentUserId.first()!!.toLong()
+        groupService.getGroupInfo(group.id) { response ->
+            if (response.success) {
+                members.clear()
+                members.addAll(response.data!!.members)
+                // sadly nesting calls now
+                members.forEach { member ->
+                    coroutineScope.launch {
+                        groupService.getPersonalBalance(member.id, group.id) { response ->
+                            if (response.success) {
+                                balances[member.id] = response.data!!
+                                if (member.id == userId) myBalance = response.data
+                            }
+                        }
+                    }
+                }
             }
         }
-        myBalance = balances[phone] ?: BigDecimal.ZERO*/
     }
 
     LaunchedEffect(Unit) {
@@ -81,6 +92,21 @@ fun GroupDetailScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {
+                        coroutineScope.launch {
+                            groupService.deleteGroup(group.id) {
+                                onDelete()
+                            }
+                        }
+                    }) {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = "Delete Group",
+                            tint = MaterialTheme.colorScheme.error
                         )
                     }
                 }
@@ -120,8 +146,8 @@ fun GroupDetailScreen(
                 modifier = Modifier.weight(1f)
             ) {
                 items(members) { member ->
-                    if (member.phone_number != phone)
-                        MemberBalanceRow(name = member.name!!, balance = balances[member.phone_number] ?: BigDecimal.ZERO)
+                    if (member.id != userId )
+                        MemberBalanceRow(name = member.name, balance = balances[member.id] ?: BigDecimal.ZERO)
                 }
             }
 

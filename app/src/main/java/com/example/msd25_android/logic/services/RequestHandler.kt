@@ -1,23 +1,27 @@
 package com.example.msd25_android.logic.services
 
 import android.content.Context
-import com.android.volley.Request
+import android.icu.math.BigDecimal
 import com.android.volley.Response
 import com.android.volley.VolleyError
 import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.JsonRequest
-import com.android.volley.toolbox.StringRequest
 import com.example.msd25_android.dataStore
 import com.example.msd25_android.logic.BackendResponse
+import com.example.msd25_android.logic.data.serialize.BigDecimalSerializer
 import com.example.msd25_android.ui.user_repository.UserRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.encodeToJsonElement
-import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.modules.SerializersModule
 import org.json.JSONObject
 
 
 class RequestHandler(val errorHandler: (VolleyError) -> Unit) {
+
+    val json = Json {
+        serializersModule = SerializersModule {
+            contextual(BigDecimal::class, BigDecimalSerializer)
+        }
+    }
 
     suspend inline fun <reified R, reified P> post(
         context: Context,
@@ -28,7 +32,7 @@ class RequestHandler(val errorHandler: (VolleyError) -> Unit) {
         crossinline onSuccess: (String) -> Unit = {},
     ) {
 
-        val jsonObj = JSONObject(Json.encodeToString(postObject))
+        val jsonObj = JSONObject(json.encodeToString(postObject))
         val headers = HashMap<String, String?>()
         val repository = UserRepository(context.dataStore)
         val token = repository.currentToken.first()
@@ -40,7 +44,7 @@ class RequestHandler(val errorHandler: (VolleyError) -> Unit) {
             url,
             jsonObj,
             { response ->
-                val resObj = Json.decodeFromString<BackendResponse<R>>(response.toString())
+                val resObj = json.decodeFromString<BackendResponse<R>>(response.toString())
                 if (resObj.success) onSuccess(resObj.message)
                 else onFail(resObj.message)
                 onResponse(resObj)
@@ -72,7 +76,7 @@ class RequestHandler(val errorHandler: (VolleyError) -> Unit) {
         val jsonRequest = object : JsonObjectRequest(
             url,
             { response ->
-                val resObj = Json.decodeFromString<BackendResponse<R>>(response.toString())
+                val resObj = json.decodeFromString<BackendResponse<R>>(response.toString())
                 if (resObj.success) onSuccess(resObj.message)
                 else onFail(resObj.message)
                 onResponse(resObj)
