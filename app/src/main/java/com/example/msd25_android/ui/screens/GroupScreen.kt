@@ -2,52 +2,38 @@ package com.example.msd25_android.ui.screens
 
 import android.app.Application
 import android.icu.math.BigDecimal
-import android.icu.math.MathContext
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.msd25_android.dataStore
-import com.example.msd25_android.logic.data.expense.ExpenseWithShares
-import com.example.msd25_android.logic.data.group.Group
-import com.example.msd25_android.logic.data.user.User
-import com.example.msd25_android.logic.viewmodels.GroupViewModel
-import com.example.msd25_android.logic.viewmodels.ExpenseViewModel
+import com.example.msd25_android.logic.data.models.Expense
+import com.example.msd25_android.logic.data.models.Group
+import com.example.msd25_android.logic.data.models.User
 import com.example.msd25_android.ui.user_repository.UserRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.math.RoundingMode
 import kotlin.collections.fold
 import com.example.msd25_android.ui.components.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupScreen(
-    groupViewModel: GroupViewModel = viewModel(),
-    expenseViewModel: ExpenseViewModel = viewModel(),
     group: Group,
     onOpenDetails: () -> Unit,
     onBack: () -> Unit = {}
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
     val members = remember { mutableStateListOf<User>() }
-    val expenses = remember { mutableStateListOf<ExpenseWithShares>() }
+    val expenses = remember { mutableStateListOf<Expense>() }
     var phone by remember { mutableStateOf("") }
 
     val userRepository = UserRepository((LocalContext.current.applicationContext as Application).dataStore)
@@ -55,7 +41,7 @@ fun GroupScreen(
 
     LaunchedEffect(showAddDialog) {
         coroutineScope.launch(Dispatchers.IO) {
-            phone = userRepository.currentPhoneNumber.first()!!
+            /*phone = userRepository.currentUserId.first()!!
 
             val memberRes = groupViewModel.getGroupWithMembers(group.id)
             if (memberRes.success) {
@@ -71,7 +57,7 @@ fun GroupScreen(
                     expenses.clear()
                     expenses.addAll(sharesRes.data!!)
                 }
-            }
+            }*/
         }
     }
 
@@ -147,10 +133,10 @@ fun GroupScreen(
 }
 
 @Composable
-private fun ExpenseBubble(expense: ExpenseWithShares) {
+private fun ExpenseBubble(expense: Expense) {
 
-    val amount: BigDecimal = expense.shares.fold(BigDecimal.ZERO) {acc, share ->
-        acc.add(share.amountOwed)
+    val amount: BigDecimal = expense.expense_shares!!.fold(BigDecimal.ZERO) {acc, share ->
+        acc.add(share.amount)
     }
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -162,8 +148,8 @@ private fun ExpenseBubble(expense: ExpenseWithShares) {
         ) {
             Column(Modifier.padding(12.dp)) {
                 Text(
-                    text = "${expense.user.name} spent ${amount.format(-1, 2)} kr" +
-                            if (expense.expense.description.isNotBlank()) " on ${expense.expense.description}" else "",
+                    text = "${expense.paid_by_user!!.name} spent ${amount.format(-1, 2)} kr" +
+                            if (expense.description!!.isNotBlank()) " on ${expense.description}" else "",
                     style = MaterialTheme.typography.titleMedium
                 )
             }

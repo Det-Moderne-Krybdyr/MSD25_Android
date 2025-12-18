@@ -40,11 +40,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.msd25_android.logic.data.expense.Expense
-import com.example.msd25_android.logic.data.expense.ExpenseShare
-import com.example.msd25_android.logic.data.group.Group
-import com.example.msd25_android.logic.data.user.User
-import com.example.msd25_android.logic.viewmodels.ExpenseViewModel
+import com.example.msd25_android.logic.data.models.Expense
+import com.example.msd25_android.logic.data.models.ExpenseShare
+import com.example.msd25_android.logic.data.models.Group
+import com.example.msd25_android.logic.data.models.User
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -57,9 +56,8 @@ fun AddExpenseDialog(
     phone: String,
     members: List<User>,
     onDismiss: () -> Unit,
-    expenseViewModel: ExpenseViewModel = viewModel()
 ) {
-    var paidBy by remember { mutableStateOf(members.first { it.phoneNumber == phone }) }
+    var paidBy by remember { mutableStateOf(members.first { it.phone_number == phone }) }
     var amountText by remember { mutableStateOf("0") }
     var note by remember { mutableStateOf("") }
     val amountIsValid = amountText.toDoubleOrNull()?.let { it >= 0.0 } == true
@@ -98,7 +96,7 @@ fun AddExpenseDialog(
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(
-                        value = paidBy.name,
+                        value = paidBy.name!!,
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Who paid?") },
@@ -116,7 +114,7 @@ fun AddExpenseDialog(
                     ) {
                         members.forEach { member ->
                             DropdownMenuItem(
-                                text = { Text(member.name) },
+                                text = { Text(member.name!!) },
                                 onClick = {
                                     paidBy = member
                                     expanded = false
@@ -152,7 +150,7 @@ fun AddExpenseDialog(
                     //verticalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier.weight(1f, fill = true)
                 ) {
-                    items(expenseShareCardData, key = { it.value.user.id }) { e ->
+                    items(expenseShareCardData, key = { it.value.user.id!! }) { e ->
                         ExpenseShareCard(e, calculateShares)
                     }
                 }
@@ -163,21 +161,22 @@ fun AddExpenseDialog(
                 enabled = amountIsValid,
                 onClick = {
                     coroutineScope.launch(Dispatchers.IO) {
-                        val expense = Expense(
-                            description = note,
-                            paidBy = paidBy.id,
-                            groupId = group.id,
-                            createdOn = Clock.System.now()
-                        )
+
                         val shares: MutableList<ExpenseShare> = mutableListOf()
                         expenseShareCardData.forEach {
                             shares.add(ExpenseShare(
-                                userId = it.value.user.id,
-                                amountOwed = it.value.amount,
+                                user_id = it.value.user.id,
+                                amount = it.value.amount,
                             ))
                         }
+                        val expense = Expense(
+                            description = note,
+                            paid_by_id = paidBy.id!!,
+                            group_id = group.id,
+                            expense_shares = shares
+                        )
 
-                        expenseViewModel.createExpense(expense, shares)
+                        // TODO: make expense in backend
                     }
                     onDismiss()
                 }
@@ -238,7 +237,7 @@ fun ExpenseShareCard(data: MutableState<ExpenseShareCardData>, calculateCallback
                     data.value = data.value.copy(amount = amount)
                     calculateCallback()
                 },
-                label = { Text(data.value.user.name) },
+                label = { Text(data.value.user.name!!) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = data.value.isChecked,

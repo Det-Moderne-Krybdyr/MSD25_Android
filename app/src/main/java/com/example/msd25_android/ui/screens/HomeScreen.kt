@@ -2,7 +2,6 @@ package com.example.msd25_android.ui.screens
 
 import android.app.Application
 import android.icu.math.BigDecimal
-import android.icu.math.MathContext
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -28,12 +27,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.msd25_android.R
 import com.example.msd25_android.dataStore
-import com.example.msd25_android.logic.data.group.Group
-import com.example.msd25_android.logic.viewmodels.ExpenseViewModel
-import com.example.msd25_android.logic.viewmodels.UserViewModel
+import com.example.msd25_android.logic.data.models.Group
+import com.example.msd25_android.logic.services.UserService
+
 import com.example.msd25_android.ui.user_repository.UserRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -44,7 +42,7 @@ data class GroupSummary(val id: String, val name: String, val balanceDkk: Int)
 fun HomeScreen(
     onOpenGroup: (group: Group) -> Unit,
     onCreateGroup: () -> Unit,
-    userViewModel: UserViewModel = viewModel(),
+    userService: UserService = viewModel()
 ) {
     val cs = MaterialTheme.colorScheme
     val groups = remember { mutableStateListOf<Group>() }
@@ -55,9 +53,11 @@ fun HomeScreen(
 
     LaunchedEffect(Unit) {
         coroutineScope.launch(Dispatchers.IO) {
-            phone = UserRepository(application.dataStore).currentPhoneNumber.first()!!
-            val res = userViewModel.getUserWithGroups(phone)
-            if (res.success) groups.addAll(res.data!!.groups)
+            userService.getGroups { res ->
+                if (res.success) {
+                    groups.addAll(res.data!!)
+                }
+            }
         }
     }
 
@@ -101,7 +101,7 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.weight(1f, fill = true)
             ) {
-                items(groups, key = { it.id }) { g ->
+                items(groups, key = { it.id!! }) { g ->
                     GroupCard(group = g, onClick = { onOpenGroup(g) }, phone = phone)
                 }
             }
@@ -114,7 +114,6 @@ private fun GroupCard(
     group: Group,
     phone: String,
     onClick: () -> Unit,
-    expenseViewModel: ExpenseViewModel = viewModel()
 ) {
     val cs = MaterialTheme.colorScheme
     var balanceDkk by remember { mutableStateOf(BigDecimal.ZERO) }
@@ -123,8 +122,8 @@ private fun GroupCard(
 
     LaunchedEffect(Unit) {
         coroutineScope.launch(Dispatchers.IO) {
-            val res = expenseViewModel.getAmountOwed(group.id, phone)
-            if (res.success) balanceDkk = res.data!!
+            /*val res = expenseViewModel.getBalanceForUserInGroup(group.id, phone)
+            if (res.success) balanceDkk = res.data!!*/
         }
     }
 
@@ -166,7 +165,7 @@ private fun GroupCard(
             }
             Surface(color = cs.surface, tonalElevation = 1.dp) {
                 Text(
-                    text = group.name,
+                    text = group.name!!,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 14.dp, vertical = 12.dp),

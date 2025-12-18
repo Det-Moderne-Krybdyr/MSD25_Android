@@ -10,7 +10,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.example.msd25_android.AppDestinations
 import com.example.msd25_android.logic.SessionManager
-import com.example.msd25_android.logic.data.group.Group
+import com.example.msd25_android.logic.data.models.Group
 import com.example.msd25_android.ui.screens.AddFriendScreen
 import com.example.msd25_android.ui.screens.CreateGroupScreen
 import com.example.msd25_android.ui.screens.EditProfileScreen

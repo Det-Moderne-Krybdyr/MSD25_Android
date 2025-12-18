@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.*
 
 class UserRepository(private val dataStore: DataStore<Preferences>) {
     private companion object {
-        val PHONE_NUMBER = stringPreferencesKey("phone_number")
+        val USER_ID = intPreferencesKey("user_id")
         val USER_TOKEN = stringPreferencesKey("user_token")
     }
 
@@ -21,14 +21,14 @@ class UserRepository(private val dataStore: DataStore<Preferences>) {
         }
     }
 
-    val currentPhoneNumber: Flow<String?> =
+    val currentUserId: Flow<Int?> =
         dataStore.data.map { preferences ->
-            preferences[PHONE_NUMBER]
+            preferences[USER_ID]
         }
 
-    suspend fun savePhoneNumber(phoneNumber: String) {
+    suspend fun saveUserId(userId: Int) {
         dataStore.edit { preferences ->
-            preferences[PHONE_NUMBER] = phoneNumber
+            preferences[USER_ID] = userId
         }
     }
 }

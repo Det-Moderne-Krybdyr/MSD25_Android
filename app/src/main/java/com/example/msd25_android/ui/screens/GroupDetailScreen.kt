@@ -28,11 +28,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.msd25_android.dataStore
-import com.example.msd25_android.logic.data.group.Group
-import com.example.msd25_android.logic.data.user.User
-import com.example.msd25_android.logic.viewmodels.ExpenseViewModel
-import com.example.msd25_android.logic.viewmodels.GroupViewModel
-import com.example.msd25_android.logic.viewmodels.UserViewModel
+import com.example.msd25_android.logic.data.models.Group
+import com.example.msd25_android.logic.data.models.User
 import com.example.msd25_android.ui.user_repository.UserRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -44,8 +41,6 @@ fun GroupDetailScreen(
     group: Group,
     onPay: (amount: BigDecimal) -> Unit,
     onBack: () -> Unit,
-    expenseViewModel: ExpenseViewModel = viewModel(),
-    groupViewModel: GroupViewModel = viewModel()
 ) {
     val cs = MaterialTheme.colorScheme
     val balances = remember { mutableStateMapOf<String, BigDecimal>() }
@@ -57,18 +52,18 @@ fun GroupDetailScreen(
     val coroutineScope = rememberCoroutineScope()
 
     suspend fun getData() {
-        phone = userRepository.currentPhoneNumber.first()!!
+        /*phone = userRepository.currentUserId.first()!!
         members.clear()
         val memberRes = groupViewModel.getGroupWithMembers(group.id)
         if (memberRes.success) members.addAll(memberRes.data!!.members)
 
         members.forEach { member ->
-            val expenseRes = expenseViewModel.getAmountOwed(group.id, member.phoneNumber)
+            val expenseRes = expenseViewModel.getBalanceForUserInGroup(group.id, member.phoneNumber)
             if (expenseRes.success) {
                 balances[member.phoneNumber] = expenseRes.data!!
             }
         }
-        myBalance = balances[phone] ?: BigDecimal.ZERO
+        myBalance = balances[phone] ?: BigDecimal.ZERO*/
     }
 
     LaunchedEffect(Unit) {
@@ -125,8 +120,8 @@ fun GroupDetailScreen(
                 modifier = Modifier.weight(1f)
             ) {
                 items(members) { member ->
-                    if (member.phoneNumber != phone)
-                        MemberBalanceRow(name = member.name, balance = balances[member.phoneNumber] ?: BigDecimal.ZERO)
+                    if (member.phone_number != phone)
+                        MemberBalanceRow(name = member.name!!, balance = balances[member.phone_number] ?: BigDecimal.ZERO)
                 }
             }
 

@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    onLogin: suspend (phone: String, password: String) -> BackendResponse<Unit>,
+    onLogin: suspend (phone: String, password: String, onFail: (String) -> Unit) -> Unit,
     onGoToSignUp: () -> Unit
 ) {
     var phone by remember { mutableStateOf("") }
@@ -81,10 +81,8 @@ fun LoginScreen(
                     onClick = {
                         Log.w("loginScreen", "onLogin triggered with $phone and $pwd")
                         coroutineScope.launch(Dispatchers.IO) {
-                            val response = onLogin(phone, pwd)
-                            if (!response.success) {
-                            failedMsg = response.message
-                        } }
+                            onLogin(phone, pwd) { msg -> failedMsg = msg }
+                        }
 
                               },
                     modifier = Modifier

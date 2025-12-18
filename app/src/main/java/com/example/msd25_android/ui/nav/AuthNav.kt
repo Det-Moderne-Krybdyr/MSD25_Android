@@ -14,19 +14,15 @@ import kotlinx.coroutines.*
 @Composable
 fun AuthNav(current: AuthDestinations, setCurrent: (AuthDestinations) -> Unit, sessionManager: SessionManager) {
 
-    val coroutineScope = rememberCoroutineScope()
-
     return when (current) {
         AuthDestinations.LOGIN -> LoginScreen(
-            onLogin = {phone, pwd ->
-                sessionManager.login(phone, pwd) },
+            onLogin = {phone, pwd, onLogin ->
+                sessionManager.login(phone, pwd, onLogin) },
             onGoToSignUp = { setCurrent(AuthDestinations.SIGNUP) }
         )
         AuthDestinations.SIGNUP -> SignUpScreen(
-            onCreate = { user ->
-                val res = sessionManager.signup(user)
-                if (res.success) setCurrent(AuthDestinations.LOGIN)
-                res
+            onCreate = { user, onFail ->
+                sessionManager.signup(user, onFail, onSuccess = {setCurrent(AuthDestinations.LOGIN)})
                        },
             onGoToLogin = { setCurrent(AuthDestinations.LOGIN) }
         )

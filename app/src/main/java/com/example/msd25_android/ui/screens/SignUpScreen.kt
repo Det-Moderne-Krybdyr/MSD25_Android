@@ -1,6 +1,8 @@
 package com.example.msd25_android.ui.screens
 
 import CustomDatePicker
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -13,18 +15,22 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.msd25_android.R
 import com.example.msd25_android.logic.BackendResponse
-import com.example.msd25_android.logic.data.user.User
+import com.example.msd25_android.logic.data.models.User
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.format.DateTimeFormat
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignUpScreen(
-    onCreate: suspend (user: User) -> BackendResponse<Unit>,
+    onCreate: suspend (user: User, onFail: (String) -> Unit) -> Unit,
     onGoToLogin: () -> Unit
 ) {
     var name by rememberSaveable { mutableStateOf("") }
@@ -46,7 +52,7 @@ fun SignUpScreen(
         .toEpochMilliseconds()
 
     val datePickerState = rememberDatePickerState(
-        //initialSelectedDateMillis = initialDateMillis,
+        initialSelectedDateMillis = initialDateMillis,
         initialDisplayMode = DisplayMode.Picker,
     )
 
@@ -141,13 +147,12 @@ fun SignUpScreen(
                     val user = User(
                         name = name,
                         email = email,
-                        phoneNumber = phone,
+                        phone_number = phone,
                         password = pw,
-                        birthdate = Instant.fromEpochMilliseconds(datePickerState.selectedDateMillis!!)
+                        birthdate = datePickerState.selectedDateMillis!!
                     )
                     coroutineScope.launch(Dispatchers.IO) {
-                        val response = onCreate(user)
-                        if (!response.success) failedMsg = response.message
+                        onCreate(user) {msg -> failedMsg = msg}
                     }
                 },
                 enabled = canCreate,
