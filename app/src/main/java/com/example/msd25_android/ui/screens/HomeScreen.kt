@@ -1,6 +1,7 @@
 package com.example.msd25_android.ui.screens
 
 import android.app.Application
+import android.content.ClipData
 import android.icu.math.BigDecimal
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -20,8 +21,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -32,9 +36,12 @@ import com.example.msd25_android.logic.services.GroupService
 import com.example.msd25_android.logic.services.UserService
 
 import com.example.msd25_android.ui.user_repository.UserRepository
+import com.google.firebase.Firebase
+import com.google.firebase.messaging.messaging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 data class GroupSummary(val id: String, val name: String, val balanceDkk: Int)
 
@@ -118,7 +125,9 @@ private fun GroupCard(
     var balanceDkk by remember { mutableStateOf(BigDecimal.ZERO) }
 
     val userRepository = UserRepository((LocalContext.current.applicationContext as Application).dataStore)
-    val coroutineScope = rememberCoroutineScope();
+    val coroutineScope = rememberCoroutineScope()
+
+    val clipBoardManager = LocalClipboard.current
 
     LaunchedEffect(Unit) {
         coroutineScope.launch(Dispatchers.IO) {
@@ -130,6 +139,7 @@ private fun GroupCard(
             }
         }
     }
+
 
 
     ElevatedCard(
@@ -166,6 +176,16 @@ private fun GroupCard(
                         color = labelFg
                     )
                 }
+            }
+            Button(onClick = {
+                coroutineScope.launch {
+                    val token = Firebase.messaging.token.await()
+                    clipBoardManager.setClipEntry(ClipEntry(ClipData.newPlainText("token", token)))
+                }
+            }) {
+                Text(
+                    text = "COPY"
+                )
             }
             Surface(color = cs.surface, tonalElevation = 1.dp) {
                 Text(

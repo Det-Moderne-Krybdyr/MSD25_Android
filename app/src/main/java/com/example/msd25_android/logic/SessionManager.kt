@@ -2,13 +2,18 @@ package com.example.msd25_android.logic
 
 import android.app.Application
 import android.health.connect.datatypes.AppInfo
+import android.util.Log
+import android.widget.Toast
 import com.example.msd25_android.API_URL
 import com.example.msd25_android.UserAuthState
 import com.example.msd25_android.dataStore
 import com.example.msd25_android.logic.data.models.Session
 import com.example.msd25_android.logic.data.models.User
+import com.example.msd25_android.logic.services.RequestHandler
 import com.example.msd25_android.ui.user_repository.UserRepository
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -22,7 +27,14 @@ class SessionManager(private val application: Application,
 ) {
 
     private val userRepository = UserRepository(application.dataStore)
-    private val requestHandler = com.example.msd25_android.requestHandler
+    private val requestHandler = RequestHandler(
+        errorHandler = { error -> Log.e("REQUESTHANDLER", error.toString()) },
+        scope = CoroutineScope(Dispatchers.Main),
+        retryMessageHandler = {
+            message -> Toast.makeText(application, message, Toast.LENGTH_SHORT).show()
+                              },
+        successMessageHandler = { message -> Toast.makeText(application, message, Toast.LENGTH_SHORT).show() }
+    )
     private val url = "$API_URL/auth"
 
     suspend fun login(phone: String, password: String, onFail: (String) -> Unit = {}, onSuccess: (String) -> Unit = {}) {

@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp") version "2.2.10-2.0.2"
     kotlin("plugin.serialization") version libs.versions.kotlin
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -81,6 +82,7 @@ dependencies {
     implementation(libs.androidx.datastore.core)
     implementation(libs.androidx.datastore.preferences.core)
     implementation(libs.androidx.compose.runtime)
+    implementation(libs.core.ktx)
     ksp(libs.room.compiler)
 
     // Testing
@@ -97,4 +99,9 @@ dependencies {
     implementation("org.mindrot:jbcrypt:0.4")
     implementation("com.android.volley:volley:1.2.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
+    implementation("com.google.firebase:firebase-analytics")
+    implementation(libs.firebase.messaging)
 }

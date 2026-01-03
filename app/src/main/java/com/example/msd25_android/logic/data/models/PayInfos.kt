@@ -2,6 +2,7 @@ package com.example.msd25_android.logic.data.models
 
 import android.icu.math.BigDecimal
 import com.example.msd25_android.logic.data.serialize.BigDecimalSerializer
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -10,6 +11,7 @@ data class DebtTransfer (
     val secondFromId: Long = 0,
     val toId: Long = 0,
     @Serializable(with = BigDecimalSerializer::class)
+    @Contextual
     val amount: BigDecimal = BigDecimal.ZERO
 )
 
@@ -17,6 +19,7 @@ data class DebtTransfer (
 data class PayInfo (
     val user: User = User(),
     @Serializable(with = BigDecimalSerializer::class)
+    @Contextual
     val amount: BigDecimal = BigDecimal.ZERO
 )
 

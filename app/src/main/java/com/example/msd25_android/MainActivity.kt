@@ -1,13 +1,17 @@
 package com.example.msd25_android
 
+import android.Manifest
 import android.app.Application
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -24,6 +28,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.*
 import androidx.datastore.preferences.core.Preferences
@@ -33,17 +39,40 @@ import com.example.msd25_android.ui.nav.AuthNav
 import com.example.msd25_android.ui.nav.HomeNav
 import com.example.msd25_android.ui.theme.MSD25_AndroidTheme
 import com.example.msd25_android.ui.user_repository.UserRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 class MainActivity() : ComponentActivity() {
 
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        requestNotificationPermission()
         enableEdgeToEdge()
         setContent {
             MSD25_AndroidTheme(dynamicColor = false) {
                 MSD25_AndroidApp()
+            }
+        }
+    }
+
+    private fun requestNotificationPermission() {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasPermission = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (!hasPermission) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    0
+                )
             }
         }
     }
@@ -78,7 +107,8 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
 
 val API_URL: String = BuildConfig.API_URL
 
-val requestHandler = RequestHandler { error -> Log.e("REQUESTHANDLER", error.toString()) }
+
+
 
 @PreviewScreenSizes
 @Preview(showBackground = true)

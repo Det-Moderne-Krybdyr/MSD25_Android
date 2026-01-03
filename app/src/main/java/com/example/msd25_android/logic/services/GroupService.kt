@@ -2,17 +2,27 @@ package com.example.msd25_android.logic.services
 
 import android.app.Application
 import android.icu.math.BigDecimal
+import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import com.example.msd25_android.API_URL
 import com.example.msd25_android.logic.BackendResponse
 import com.example.msd25_android.logic.data.models.Expense
 import com.example.msd25_android.logic.data.models.Group
 import com.example.msd25_android.logic.data.models.PayInfos
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.Serializable
 
 class GroupService(private val application: Application): AndroidViewModel(application) {
 
-    private val requestHandler = com.example.msd25_android.requestHandler
+    private val requestHandler = RequestHandler(
+        errorHandler = { error -> Log.e("REQUESTHANDLER", error.toString()) },
+        scope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
+        retryMessageHandler = { message -> Toast.makeText(application, message, Toast.LENGTH_SHORT) },
+        successMessageHandler = { message -> Toast.makeText(application, message, Toast.LENGTH_SHORT) }
+    )
 
     private val url = "$API_URL/group"
 
