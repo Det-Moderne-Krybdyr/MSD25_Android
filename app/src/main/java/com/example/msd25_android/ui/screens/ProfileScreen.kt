@@ -1,7 +1,6 @@
 package com.example.msd25_android.ui.screens
 
 import android.app.Application
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -16,11 +15,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.msd25_android.logic.viewmodels.UserViewModel
-import com.example.msd25_android.logic.data.user.User
+import com.example.msd25_android.logic.data.models.User
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.msd25_android.MainActivity
 import com.example.msd25_android.dataStore
+import com.example.msd25_android.logic.services.UserService
 import com.example.msd25_android.ui.user_repository.UserRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -30,22 +28,22 @@ import kotlinx.datetime.Clock
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    userViewModel: UserViewModel = viewModel(),
     onEdit: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    userService: UserService = viewModel()
 ) {
 
-    var user: User by remember { mutableStateOf(User(birthdate = Clock.System.now())) }
-    val application = LocalContext.current.applicationContext as Application
+    var user: User by remember { mutableStateOf(User(birthdate = 0)) }
+    //val application = LocalContext.current.applicationContext as Application
     val coroutineScope = rememberCoroutineScope()
     val scroll = rememberScrollState()
 
     LaunchedEffect(Unit) {
         coroutineScope.launch(Dispatchers.IO) {
-            val phone = UserRepository(application.dataStore).currentPhoneNumber.first()
-            if (phone != null)  {
-                val res = userViewModel.getUserByPhone(phone)
-                if (res.data != null) user = res.data
+            userService.getUserInfo { res ->
+                if (res.success) {
+                    user = res.data!!
+                }
             }
         }
     }
@@ -70,7 +68,7 @@ fun ProfileScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = user.name.firstOrNull()?.uppercase() ?: "M",
+                    text = user.name!!.firstOrNull()?.uppercase() ?: "M",
                     style = MaterialTheme.typography.displayLarge.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
@@ -82,9 +80,9 @@ fun ProfileScreen(
                 Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                InfoCard(label = "Name", value = user.name)
-                InfoCard(label = "Email", value = user.email)
-                InfoCard(label = "Phone", value = user.phoneNumber)
+                InfoCard(label = "Name", value = user.name!!)
+                InfoCard(label = "Email", value = user.email!!)
+                InfoCard(label = "Phone", value = user.phone_number!!)
             }
 
             Spacer(modifier = Modifier.height(28.dp))

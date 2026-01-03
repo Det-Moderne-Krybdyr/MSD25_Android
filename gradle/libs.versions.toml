@@ -1,6 +1,6 @@
 [versions]
 agp = "8.13.0"
-kotlin = "2.0.21"
+kotlin = "2.2.0"
 coreKtx = "1.10.1"
 junit = "4.13.2"
 junitVersion = "1.1.5"
@@ -12,6 +12,9 @@ room = "2.6.1"
 datastoreCore = "1.1.7"
 datastorePreferencesCore = "1.1.7"
 runtime = "1.9.4"
+volley = "1.2.1"
+firebaseMessaging = "25.0.1"
+coreKtxVersion = "1.7.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -35,6 +38,9 @@ room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastoreCore" }
 androidx-datastore-preferences-core = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferencesCore" }
 androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
+volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging", version.ref = "firebaseMessaging" }
+core-ktx = { group = "androidx.test", name = "core-ktx", version.ref = "coreKtxVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

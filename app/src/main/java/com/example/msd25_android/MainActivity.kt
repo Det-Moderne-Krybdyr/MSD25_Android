@@ -1,11 +1,17 @@
 package com.example.msd25_android
 
+import android.Manifest
 import android.app.Application
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -16,33 +22,57 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.*
 import androidx.datastore.preferences.core.Preferences
 import com.example.msd25_android.logic.SessionManager
+import com.example.msd25_android.logic.services.RequestHandler
 import com.example.msd25_android.ui.nav.AuthNav
 import com.example.msd25_android.ui.nav.HomeNav
-import com.example.msd25_android.ui.screens.*
 import com.example.msd25_android.ui.theme.MSD25_AndroidTheme
 import com.example.msd25_android.ui.user_repository.UserRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-class MainActivity : ComponentActivity() {
+class MainActivity() : ComponentActivity() {
+
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        requestNotificationPermission()
         enableEdgeToEdge()
         setContent {
             MSD25_AndroidTheme(dynamicColor = false) {
                 MSD25_AndroidApp()
+            }
+        }
+    }
+
+    private fun requestNotificationPermission() {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasPermission = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (!hasPermission) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    0
+                )
             }
         }
     }
@@ -75,6 +105,11 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
     name = "setting"
 )
 
+val API_URL: String = BuildConfig.API_URL
+
+
+
+
 @PreviewScreenSizes
 @Preview(showBackground = true)
 @Composable
@@ -88,10 +123,10 @@ fun MSD25_AndroidApp() {
     val cs = MaterialTheme.colorScheme
 
     val application = LocalContext.current.applicationContext as Application
-    val userRepository = UserRepository(application.dataStore)
 
-    val sessionManager = SessionManager(application, setUserAuthState, userRepository)
     val coroutineScope = rememberCoroutineScope()
+    val sessionManager = SessionManager(application, setUserAuthState, coroutineScope)
+
 
     LaunchedEffect(Unit) {
         coroutineScope.launch(Dispatchers.IO) { sessionManager.restoreToken() }

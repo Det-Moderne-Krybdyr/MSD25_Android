@@ -1,114 +1,143 @@
 package com.example.msd25_android.logic
 
 import android.app.Application
+import android.health.connect.datatypes.AppInfo
+import android.util.Log
+import android.widget.Toast
+import com.example.msd25_android.API_URL
 import com.example.msd25_android.UserAuthState
-import com.example.msd25_android.logic.data.AppDatabase
-import com.example.msd25_android.logic.data.session.Session
-import com.example.msd25_android.logic.data.user.User
+import com.example.msd25_android.dataStore
+import com.example.msd25_android.logic.data.models.Session
+import com.example.msd25_android.logic.data.models.User
+import com.example.msd25_android.logic.services.RequestHandler
 import com.example.msd25_android.ui.user_repository.UserRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import org.mindrot.jbcrypt.BCrypt
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-class SessionManager(application: Application,
+class SessionManager(private val application: Application,
                      private val setUserAuthState: (UserAuthState) -> Unit,
-                     private val userRepository: UserRepository
+                     private val coroutine: CoroutineScope
 ) {
-    private val userDao = AppDatabase.getDatabase(application).userDao()
-    private val sessionDao = AppDatabase.getDatabase(application).sessionDao()
 
-    @OptIn(ExperimentalUuidApi::class)
-    suspend fun login(phone: String, password: String): BackendResponse<Unit> {
-        val user = userDao.getUserByPhone(phone)
-        if (user == null) {
-            return BackendResponse(false, "Invalid phone number")
-        }
-        if (!BCrypt.checkpw(password, user.password)) {
-            return BackendResponse(false, "Invalid password")
-        }
-        // create session
-        val uuid = Uuid.random()
-        val token = BCrypt.hashpw(uuid.toString(), BCrypt.gensalt(5))
-        val session = Session(user.id, token)
+    private val userRepository = UserRepository(application.dataStore)
+    private val requestHandler = RequestHandler(
+        errorHandler = { error -> Log.e("REQUESTHANDLER", error.toString()) },
+        scope = CoroutineScope(Dispatchers.Main),
+        retryMessageHandler = {
+            message -> Toast.makeText(application, message, Toast.LENGTH_SHORT).show()
+                              },
+        successMessageHandler = { message -> Toast.makeText(application, message, Toast.LENGTH_SHORT).show() }
+    )
+    private val url = "$API_URL/auth"
 
-        sessionDao.insertSession(session)
-        setUserAuthState(UserAuthState.AUTHENTICATED)
-        userRepository.savePhoneNumber(user.phoneNumber)
-        userRepository.saveUserToken(uuid.toString())
-        return BackendResponse(true, "")
+    suspend fun login(phone: String, password: String, onFail: (String) -> Unit = {}, onSuccess: (String) -> Unit = {}) {
+        val user = User(phone_number = phone, password = password)
+
+        val onResponse: (BackendResponse<String>) -> Unit = { res ->
+            coroutine.launch {
+                if (res.success) {
+                    userRepository.saveUserToken(res.data!!)
+                    userRepository.saveUserId(res.data.split(':')[0].toInt())
+                    setUserAuthState(UserAuthState.AUTHENTICATED)
+                }
+                else {
+                    setUserAuthState(UserAuthState.UNAUTHENTICATED)
+                }
+            }
+
+        }
+
+        requestHandler.post(
+            context = application,
+            url = "$url/signin",
+            onResponse = onResponse,
+            postObject = user,
+            onFail = onFail,
+            onSuccess = onSuccess
+        )
     }
 
-    suspend fun signup(user: User): BackendResponse<Unit> {
-        val encrypted = BCrypt.hashpw(user.password, BCrypt.gensalt(5))
+    suspend fun signup(user: User, onFail: (String) -> Unit = {}, onSuccess: (String) -> Unit = {}) {
 
-        if (userDao.getUserByPhone(user.phoneNumber) != null) {
-            return BackendResponse(false, "Phone number is already registered")
+        val onResponse: (BackendResponse<String>) -> Unit = { res ->
+            coroutine.launch {
+                if (res.success) {
+                    userRepository.saveUserToken(res.data!!)
+                    userRepository.saveUserId(res.data.split(':')[0].toInt())
+                    setUserAuthState(UserAuthState.AUTHENTICATED)
+                }
+                else {
+                    setUserAuthState(UserAuthState.UNAUTHENTICATED)
+                    onFail(res.message)
+                }
+            }
+
         }
 
-        if (userDao.getUserByEmail(user.email) != null) {
-            return BackendResponse(false, "Email is already registered")
-        }
-
-        userDao.insertUser(User(
-            name = user.name,
-            password = encrypted,
-            id = 0,
-            email = user.email,
-            phoneNumber = user.phoneNumber,
-            birthdate = user.birthdate,
-        ))
-        val newUser = userDao.getUserByPhone(user.phoneNumber)
-        if (newUser == null) {
-            return BackendResponse(false, "Something went wrong!")
-        }
-
-        return login(user.phoneNumber, user.password)
+        requestHandler.post(
+            context = application,
+            url = "$url/signup",
+            onResponse = onResponse,
+            postObject = user,
+            onFail = onFail,
+            onSuccess = onSuccess
+        )
     }
 
     suspend fun logout() {
-        setUserAuthState(UserAuthState.UNAUTHENTICATED)
 
-        val phone = userRepository.currentPhoneNumber.first()
         val token = userRepository.currentToken.first()
 
-        if (phone == null || token == null) return
-
-        val userWithSessions = userDao.getUserWithSessions(phone)
-        if (userWithSessions == null) return
-
-        for (session in userWithSessions.sessions) {
-            if (BCrypt.checkpw(token, session.token)) {
-                sessionDao.deleteSession(session)
-                return
+        val onResponse: (BackendResponse<String>) -> Unit = { res ->
+            coroutine.launch {
+                userRepository.saveUserId(-1)
+                userRepository.saveUserToken("")
+                setUserAuthState(UserAuthState.UNAUTHENTICATED)
             }
         }
+
+        requestHandler.post(
+            context = application,
+            url = "$url/signout",
+            onResponse = onResponse,
+            postObject = TokenPostObject(token!!)
+        )
     }
 
     suspend fun restoreToken() {
-        val phone = userRepository.currentPhoneNumber.first()
         val token = userRepository.currentToken.first()
-        if (phone == null || token == null) {
+        if (token == null) {
             setUserAuthState(UserAuthState.UNAUTHENTICATED)
             return
         }
-        val userWithSessions = userDao.getUserWithSessions(phone)
-        if (userWithSessions == null) {
-            setUserAuthState(UserAuthState.UNAUTHENTICATED)
-            return
-        }
-        for (session in userWithSessions.sessions) {
-            if (BCrypt.checkpw(token, session.token)) {
-                setUserAuthState(UserAuthState.AUTHENTICATED)
-                return
+
+        val onResponse: (BackendResponse<Boolean>) -> Unit = { res ->
+            if (res.success) {
+                setUserAuthState(
+                    if (res.data!!)
+                        UserAuthState.AUTHENTICATED
+                    else
+                        UserAuthState.UNAUTHENTICATED
+                )
             }
         }
 
-        setUserAuthState(UserAuthState.UNAUTHENTICATED)
-        return
+        requestHandler.post(
+            context = application,
+            url = "$url/validate",
+            onResponse = onResponse,
+            postObject = TokenPostObject(token)
+        )
     }
-
-
-
-
+    @Serializable
+    private data class TokenPostObject(
+        val token: String
+    )
 }

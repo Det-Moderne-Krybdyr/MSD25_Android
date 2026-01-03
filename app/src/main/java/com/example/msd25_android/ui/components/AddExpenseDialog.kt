@@ -40,11 +40,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.msd25_android.logic.data.expense.Expense
-import com.example.msd25_android.logic.data.expense.ExpenseShare
-import com.example.msd25_android.logic.data.group.Group
-import com.example.msd25_android.logic.data.user.User
-import com.example.msd25_android.logic.viewmodels.ExpenseViewModel
+import com.example.msd25_android.logic.data.models.Expense
+import com.example.msd25_android.logic.data.models.ExpenseShare
+import com.example.msd25_android.logic.data.models.Group
+import com.example.msd25_android.logic.data.models.User
+import com.example.msd25_android.logic.services.GroupService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -54,12 +54,12 @@ import kotlin.collections.forEach
 @Composable
 fun AddExpenseDialog(
     group: Group,
-    phone: String,
+    userId: Long,
     members: List<User>,
     onDismiss: () -> Unit,
-    expenseViewModel: ExpenseViewModel = viewModel()
+    groupService: GroupService = viewModel()
 ) {
-    var paidBy by remember { mutableStateOf(members.first { it.phoneNumber == phone }) }
+    var paidBy by remember { mutableStateOf(members.first() { it.id == userId }) }
     var amountText by remember { mutableStateOf("0") }
     var note by remember { mutableStateOf("") }
     val amountIsValid = amountText.toDoubleOrNull()?.let { it >= 0.0 } == true
@@ -83,7 +83,7 @@ fun AddExpenseDialog(
             }
         }
         val numShares = expenseShareCardData.filter { it.value.isChecked && !it.value.isChanged }.size
-        val shareAmount = splitAmount.divide(BigDecimal(numShares), mc)
+        val shareAmount = if (numShares > 0) splitAmount.divide(BigDecimal(numShares), mc) else BigDecimal.ZERO
         expenseShareCardData.forEach {
             if (it.value.isChecked && !it.value.isChanged) {
                 it.value = it.value.copy(amount = shareAmount)
@@ -160,26 +160,28 @@ fun AddExpenseDialog(
         },
         confirmButton = {
             TextButton(
-                enabled = amountIsValid,
+                enabled = amountIsValid && note.isNotBlank(),
                 onClick = {
                     coroutineScope.launch(Dispatchers.IO) {
-                        val expense = Expense(
-                            description = note,
-                            paidBy = paidBy.id,
-                            groupId = group.id,
-                            createdOn = Clock.System.now()
-                        )
+
                         val shares: MutableList<ExpenseShare> = mutableListOf()
                         expenseShareCardData.forEach {
-                            shares.add(ExpenseShare(
-                                userId = it.value.user.id,
-                                amountOwed = it.value.amount,
-                            ))
+                            if (it.value.isChecked && it.value.amount.compareTo(BigDecimal.ZERO) == 1) {
+                                shares.add(ExpenseShare(
+                                    user_id = it.value.user.id,
+                                    amount = it.value.amount,
+                                ))
+                            }
                         }
+                        val expense = Expense(
+                            description = note,
+                            paid_by_id = paidBy.id,
+                            group_id = group.id,
+                            expense_shares = shares
+                        )
 
-                        expenseViewModel.createExpense(expense, shares)
+                        groupService.postExpense(expense) {onDismiss()}
                     }
-                    onDismiss()
                 }
             ) { Text("Add") }
         },

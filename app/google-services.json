@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "504199497696",
+    "project_id": "msd-16",
+    "storage_bucket": "msd-16.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:504199497696:android:0101de037dbfb26c168d85",
+        "android_client_info": {
+          "package_name": "com.example.msd25_android"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_42CdJNsYUeilmqrnQwzosmbA-rLRF0o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

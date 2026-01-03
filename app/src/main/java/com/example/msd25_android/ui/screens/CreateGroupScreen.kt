@@ -22,15 +22,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
@@ -38,43 +33,41 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.msd25_android.dataStore
-import com.example.msd25_android.logic.data.group.Group
-import com.example.msd25_android.logic.data.user.User
-import com.example.msd25_android.logic.viewmodels.GroupViewModel
-import com.example.msd25_android.logic.viewmodels.UserViewModel
+import com.example.msd25_android.logic.data.models.Group
+import com.example.msd25_android.logic.data.models.User
+import com.example.msd25_android.logic.services.GroupService
+import com.example.msd25_android.logic.services.UserService
 import com.example.msd25_android.ui.user_repository.UserRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.lang.reflect.Member
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateGroupScreen(
     onDone: () -> Unit,
     onBack: () -> Unit = {},
-    groupViewModel: GroupViewModel = viewModel(),
-    userViewModel: UserViewModel = viewModel()
+    userService: UserService = viewModel(),
+    groupService: GroupService = viewModel()
+
 ) {
-
-
-
     var name by remember { mutableStateOf("") }
     val members = remember { mutableStateListOf<User>() }
-    val cs = MaterialTheme.colorScheme
     var phone by remember {mutableStateOf("")}
 
-    val canCreate = name.isNotBlank() && members.isNotEmpty()
+    val cs = MaterialTheme.colorScheme
+    val canCreate = name.isNotBlank() && members.size > 1 // cant have a group of just yourself
 
-    val userRepository = UserRepository((LocalContext.current.applicationContext as Application).dataStore)
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         coroutineScope.launch(Dispatchers.IO) {
-            phone = userRepository.currentPhoneNumber.first()!!
-            val res = userViewModel.getUserByPhone(phone!!)
-            members.add(res.data!!)
+            userService.getUserInfo { res ->
+                if (res.success) {
+                    members.add(res.data!!)
+                    phone = res.data.phone_number
+                }
+            }
         }
     }
 
@@ -110,9 +103,11 @@ fun CreateGroupScreen(
                     Button(
                         onClick = {
                             coroutineScope.launch(Dispatchers.IO) {
-                                groupViewModel.createGroupWithMembers(Group(name = name), members)
+                                val group = Group(name = name, members = members)
+                                groupService.createGroup(group) { response ->
+                                    onDone()
+                                }
                             }
-                            onDone()
                                   },
                         enabled = canCreate,
                         modifier = Modifier
@@ -157,11 +152,11 @@ fun CreateGroupScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     reverseLayout = true
                 ) {
-                    items(members, key = { it.id }) { m ->
+                    items(members, key = { it.id!! }) { m ->
                         MemberCard(
-                            name = m.name,
+                            name = m.name!!,
                             onRemove = { members.remove(m) },
-                            removable = m.phoneNumber != phone
+                            removable = m.phone_number != phone
                         )
                     }
                 }
@@ -235,20 +230,17 @@ private fun MemberCard(
 @Composable
 fun MemberInputDropdown(
     members: MutableList<User>,
-    userViewModel: UserViewModel = viewModel(),
+    userService: UserService = viewModel()
 ) {
 
     var friends by remember { mutableStateOf<List<User>>(emptyList()) }
     var options by remember { mutableStateOf<List<User>>(emptyList()) }
-    val userRepository = UserRepository((LocalContext.current.applicationContext as Application).dataStore)
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         coroutineScope.launch(Dispatchers.IO) {
-            val phone = userRepository.currentPhoneNumber.first()
-            val res = userViewModel.getUserWithFriends(phone!!)
-            if (res.success) {
-                friends = res.data!!.friends
+            userService.getFriends { response ->
+                if (response.success) friends = response.data!!
             }
         }
     }
@@ -269,7 +261,7 @@ fun MemberInputDropdown(
 
     val filterSearch = {
         options = friends.filter { friend ->
-            friend.name.toLowerCase(Locale.current).startsWith(mSelectedText.toLowerCase(Locale.current)) }
+            friend.name!!.toLowerCase(Locale.current).startsWith(mSelectedText.toLowerCase(Locale.current)) }
             .filter { friend ->
                 members.none { member -> member.id == friend.id }
             }
@@ -334,12 +326,12 @@ fun AddFriendCard(friend: User, members: MutableList<User>, addCallback: () -> U
     ) {
         Column {
             Text(
-                text = friend.phoneNumber,
+                text = friend.phone_number!!,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = friend.name,
+                text = friend.name!!,
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
                 color = MaterialTheme.colorScheme.onSurface
             )

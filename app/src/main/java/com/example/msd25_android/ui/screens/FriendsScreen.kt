@@ -17,8 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.msd25_android.dataStore
-import com.example.msd25_android.logic.viewmodels.UserViewModel
-import com.example.msd25_android.logic.data.user.User
+import com.example.msd25_android.logic.data.models.User
+import com.example.msd25_android.logic.services.UserService
 import com.example.msd25_android.ui.user_repository.UserRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -28,20 +28,19 @@ import kotlinx.coroutines.launch
 @Composable
 fun FriendsScreen(
     onAddFriend: () -> Unit = {},  // handled by MainActivity
-    userViewModel: UserViewModel = viewModel()
+    userService: UserService = viewModel()
 ) {
     val cs = MaterialTheme.colorScheme
 
     val friends = remember { mutableStateListOf<User>() }
-    val userRepository = UserRepository((LocalContext.current.applicationContext as Application).dataStore)
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         coroutineScope.launch(Dispatchers.IO) {
-            val phone = userRepository.currentPhoneNumber.first()
-            val res = userViewModel.getUserWithFriends(phone!!)
-            if (res.success) {
-                friends.addAll(res.data!!.friends)
+            userService.getFriends { res ->
+                if (res.success) {
+                    friends.addAll(res.data!!)
+                }
             }
         }
     }
@@ -76,7 +75,7 @@ fun FriendsScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(friends) { friend ->
-                    FriendCard(name = friend.name)
+                    FriendCard(name = friend.name!!)
                 }
             }
         }

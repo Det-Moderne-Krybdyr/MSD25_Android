@@ -1,8 +1,15 @@
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+val API_URL = gradleLocalProperties(rootDir, providers).getProperty("api_url", "127.0.0.1:3000")
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.devtools.ksp") version "2.0.21-1.0.25"
+    id("com.google.devtools.ksp") version "2.2.10-2.0.2"
+    kotlin("plugin.serialization") version libs.versions.kotlin
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -17,6 +24,12 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "API_URL", "\"${API_URL}\"")
+
+        buildFeatures {
+            buildConfig = true
+        }
     }
 
     buildTypes {
@@ -34,13 +47,17 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = "11"
+    kotlin {
+        compilerOptions {
+            jvmTarget = JvmTarget.JVM_11
+        }
     }
 
     buildFeatures {
         compose = true
     }
+
+
 }
 
 val roomVersion = "2.6.1"
@@ -60,12 +77,13 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.8.0")
 
     // Room (using KSP)
-    implementation("androidx.room:room-runtime:$roomVersion")
-    implementation("androidx.room:room-ktx:$roomVersion")
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
     implementation(libs.androidx.datastore.core)
     implementation(libs.androidx.datastore.preferences.core)
     implementation(libs.androidx.compose.runtime)
-    ksp("androidx.room:room-compiler:$roomVersion")
+    implementation(libs.core.ktx)
+    ksp(libs.room.compiler)
 
     // Testing
     testImplementation(libs.junit)
@@ -79,5 +97,11 @@ dependencies {
     // Others
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
     implementation("org.mindrot:jbcrypt:0.4")
+    implementation("com.android.volley:volley:1.2.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
 
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
+    implementation("com.google.firebase:firebase-analytics")
+    implementation(libs.firebase.messaging)
 }

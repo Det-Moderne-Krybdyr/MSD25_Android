@@ -1,7 +1,6 @@
 package com.example.msd25_android.ui.screens
 
 import CustomDatePicker
-import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,18 +14,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.msd25_android.dataStore
-import com.example.msd25_android.logic.viewmodels.UserViewModel
-import com.example.msd25_android.logic.data.user.User
-import com.example.msd25_android.ui.user_repository.UserRepository
+import com.example.msd25_android.logic.data.models.User
+import com.example.msd25_android.logic.services.UserService
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
@@ -36,13 +29,11 @@ import kotlinx.datetime.atStartOfDayIn
 fun EditProfileScreen(
     onDone: () -> Unit,
     onPickImage: (() -> Unit)? = null,
-    userViewModel: UserViewModel = viewModel(),
-
+    userService: UserService = viewModel()
     ) {
-    var user: User by remember { mutableStateOf(User(birthdate = Clock.System.now())) }
+    var user: User by remember { mutableStateOf(User()) }
     var name: String by remember { mutableStateOf("") }
 
-    val application = LocalContext.current.applicationContext as Application
     val coroutineScope = rememberCoroutineScope()
 
     var notificationsEnabled by rememberSaveable { mutableStateOf(true) }
@@ -50,18 +41,22 @@ fun EditProfileScreen(
     val cs = MaterialTheme.colorScheme
     val scroll = rememberScrollState()
 
+    val initialDateMillis = LocalDate(2025, 1, 15)
+        .atStartOfDayIn(TimeZone.UTC)
+        .toEpochMilliseconds()
+
     val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = initialDateMillis,
         initialDisplayMode = DisplayMode.Picker,
     )
 
     LaunchedEffect(Unit) {
-        coroutineScope.launch(Dispatchers.IO) { val phone = UserRepository(application.dataStore).currentPhoneNumber.first()
-            if (phone != null)  {
-                val res = userViewModel.getUserByPhone(phone)
-                if (res.data != null) {
-                    user = res.data
+        coroutineScope.launch(Dispatchers.IO) {
+            userService.getUserInfo { res ->
+                if (res.success) {
+                    user = res.data!!
                     name = user.name
-                    datePickerState.selectedDateMillis = user.birthdate.toEpochMilliseconds()
+                    datePickerState.selectedDateMillis = user.birthdate
                 }
             }
         }
@@ -127,28 +122,13 @@ fun EditProfileScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            InfoCard(label = "Phone", value = user.phoneNumber)
+            InfoCard(label = "Phone", value = user.phone_number)
 
             Spacer(Modifier.height(12.dp))
 
             CustomDatePicker(state = datePickerState, borderColor = fieldColors.unfocusedIndicatorColor)
 
             Spacer(Modifier.height(12.dp))
-
-            /*OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Password") },
-                singleLine = true,
-                visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-                    TextButton(onClick = { showPassword = !showPassword }) {
-                        Text(if (showPassword) "Hide" else "Show", style = MaterialTheme.typography.labelSmall)
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = fieldColors
-            )*/
 
             Spacer(Modifier.height(16.dp))
 
@@ -178,9 +158,11 @@ fun EditProfileScreen(
             Button(
                 onClick = {
                     coroutineScope.launch(Dispatchers.IO) {
-                        user.name = name
-                        user.birthdate = Instant.fromEpochMilliseconds(datePickerState.selectedDateMillis!!)
-                        userViewModel.updateUser(user)
+                        val newUser = user.copy(
+                            name = name,
+                            birthdate = datePickerState.selectedDateMillis!!
+                        )
+                        userService.updateUser(newUser) {}
                     }
                     onDone()
                           },
